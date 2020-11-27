@@ -9,8 +9,8 @@
 //! - **compatibility with the standard `core::fmt` traits and the standard `log` library API**.
 //!   This means that, while libraries may "upgrade" their logging capabilities by using `delog`
 //!   as drop-in replacement for their logging calls (see below), any existing library that already
-//!   uses `log` is compatible. This, for us, is a huge win as opposed to using up "weirdness
-//!   budget" for something as trivial and throw-away as simple logging.
+//!   uses `log` is compatible. This, for our use cases, is a huge win, as opposed to using up "weirdness
+//!   budget" and requiring custom tooling for something that is often trivial, throw-away, simple logging.
 //! - it follows that one can easily drop a `trace!("{:?}", &suspicious_object)` call at any time for
 //!   any object that has a (possibly automatically derived) `Debug` trait implementation – without
 //!   passing around structures and keeping on top of lifetimes.
@@ -23,25 +23,48 @@
 //!   with "!" as parameter, or using the additional `immediate_info!` and friends macros.
 //! - ability to set log levels *per library, at compile-time*. This can be easily retro-fitted
 //!   on existing `log`-based libraries, by adding the requisite features in `Cargo.toml` and
-//!   replacing `log` with `delog`.
+//!   replacing `log` with `delog` (see `gate-tests` for examples of this).
 //! - the outcome is that one can leave useful logging calls in the library code, only to activate
-//!   them in targeted ways, exactly as needed.
+//!   them in targeted ways at build time, exactly as needed.
 //! - helper macros to easily output binary byte arrays and slices in hexadecimal representations,
 //!   which wrap the data in newtypes with custom `fmt::UpperHex` etc. implementations.
 //!
 //! **Non-goals**:
 //!
-//! - ultimate speed or code size: Our intention are "normal" logs, not the use of "logging" for streaming
-//!   binary data to the host. While admittedly the `core::fmt`-ing facilities are not as efficient
-//!   as one may hope, in our use cases we have sufficient flash and RAM to use these (and some
-//!   hope that, someday, eventually, maybe, the formatting machinery will be revisited and
+//! - ultimate speed or code size: Our intention are "normal" logs, not the use of logging/tracing to
+//!   for stream binary data to the host. While admittedly the `core::fmt`-ing facilities are not as
+//!   efficient as one might hope, in our use cases we have sufficient flash and RAM to use these (and
+//!   some hope that, someday, eventually, maybe, the formatting machinery will be revisited and
 //!   improved at the root level, namely the language itself.)
 //!
 //! That said, we believe there is opportunity to extend `delog` in the `defmt` direction by
 //! using, e.g., the `fmt::Binary` trait, newtypes and sentinel values to embed raw binary
-//! represenations of data in abnormally time-critical situations without formatting, deferring
+//! representations of data in time-critical situations without formatting, deferring
 //! the extraction and actual formatting to some host-side mechanism.
+//!
+//! ## Features
+//! The `flushers` and `semihosting` features mostly exist to share code within the examples,
+//! including the `example` feature. Without them, dependencies are quite minimal, and compilation fast.
+//!
+//! The `fallible` and `immediate` features (default on) activate the `try_*!` and `*_now!` macros, respectively.
+//!
+//! ## Warning
+//! The current circular buffer implementation (v0.1.0) is definitely unsound on desktop.
+//! For embedded use, atomics are required (so no Cortex-M0/M1, and no plans to support non-atomic
+//! platforms, which are likely to also be too resource-constrained to support the bloat inherent
+//! in `core::fmt`). While we think the implemented circular buffer algorithm works for the "nested interrupt"
+//! setup of NVICs, it has not been tested much.
+//! The hope is that the worst case scenario is some slightly messed up log outputs.
+//!
+//! ## Outlook
+//! We plan to iterate towards a v0.2.0 soon, making use of a separate "flusher" for the
+//! "immediate" logging path. For instance, when logging via serial-over-USB, one might want immediate
+//! logs to pend a separate RTIC interrupt handler that blocks until the logs are pushed and read
+//! (allowing one to debug the boot process of a firmware), or one might want to just write to RTT
+//! (or even semihosting xD) for these, during development.
+//!
 
+#![deny(missing_docs)]
 #![cfg_attr(not(any(feature = "std", test)), no_std)]
 use core::fmt;
 
@@ -55,7 +78,7 @@ pub use log::{debug, error, info, log, log_enabled, trace, warn};
 #[cfg(feature = "example")]
 pub mod example;
 
-#[cfg(any(feature="std", feature="semihosting", test))]
+#[cfg(all(feature = "flushers", any(feature="std", feature="semihosting", test)))]
 pub mod flushers;
 
 pub mod hex;
@@ -64,23 +87,24 @@ mod log_macros_global;
 mod log_macros_local;
 mod logger;
 
-pub use logger::{Delogger, Statistics, TryLog, dequeue, enqueue, try_enqueue};
+pub use logger::{Delogger, Statistics, TryLog, TryLogWithStatistics, dequeue, enqueue, try_enqueue};
 pub mod render;
 
-/// A way to pass on logs, user supplied
+/// A way to pass on logs, user supplied.
 ///
 /// In embedded, this is intended to pend an interrupt
 /// to send the logs off via (USB) serial, semihosting, or similar.
 ///
 /// On PC, typical implemenation will just println! or eprintln!
 pub trait Flusher: core::fmt::Debug + Send {
+    /// Implementor must handle passed log `&str` in some hopefully useful way.
     fn flush(&self, logs: &str);
 }
 
-static mut LOGGER: Option<&'static dyn logger::TryLog> = None;
+static mut LOGGER: Option<&'static dyn logger::TryLogWithStatistics> = None;
 
-/// Returns a reference to the logger (as `TryLog` implementation)
-pub fn trylogger() -> &'static mut Option<&'static dyn logger::TryLog> {
+/// Returns a reference to the logger (as `TryLogWithStatistics` implementation)
+pub fn trylogger() -> &'static mut Option<&'static dyn logger::TryLogWithStatistics> {
     unsafe { &mut LOGGER }
 }
 

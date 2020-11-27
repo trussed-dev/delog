@@ -14,5 +14,5 @@ path = "lib-b"
 
 [dependencies.delog]
 path = ".."
-features = ["std"]
+features = ["std", "flushers"]
 

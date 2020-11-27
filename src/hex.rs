@@ -39,8 +39,6 @@
 use core::marker::PhantomData;
 use core::fmt;
 
-use hex_fmt;
-
 /// re-export from `hex_fmt`
 ///
 pub use hex_fmt::HexFmt;
@@ -52,6 +50,7 @@ pub use typenum::{consts, Unsigned};
 
 /// A type that specifies a separator str.
 pub trait Separator {
+    /// The actual separator str.
     const SEPARATOR: &'static str;
 }
 
@@ -76,6 +75,7 @@ where
     S: Separator,
     BytesPerBlock: Unsigned,
 {
+    /// The value to be formatted.
     pub value: &'a T,
     _separator: PhantomData<S>,
     _block_size: PhantomData<BytesPerBlock>,
@@ -182,91 +182,91 @@ macro_rules! hexstr {
 /// let hex_str = HexStr::<_, Pipe, consts::U3>(four_bytes);
 /// assert_eq!(format!("{}", hex_str), "07A1FF|C7");
 /// ```
-pub fn HexStr<'a, T: ?Sized, S: Separator, B: Unsigned>(value: &'a T) -> HexStr<'a, T, S, B> {
+pub fn HexStr<T: ?Sized, S: Separator, B: Unsigned>(value: &T) -> HexStr<T, S, B> {
     HexStr { value, _separator: PhantomData, _block_size: PhantomData }
 }
 
 /// blocks of 1 byte / 8 bits in hex, no space in between (e.g., `4A121387`)
 ///
 /// For ease of use, prefer the `hexstr!(value)` macro.
-pub fn hexstr<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, NullSeparator, consts::U1> {
+pub fn hexstr<T: ?Sized>(value: &T) -> HexStr<T, NullSeparator, consts::U1> {
     HexStr(value)
 }
 
 /// synonym for `hex_str_1`, like ISO 7816 if enclosed in single quotes (`'8A 4F 12 AA'`).
 ///
 /// For ease of use, prefer the `hex_str!(value)` macro.
-pub fn hex_str<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T> {
+pub fn hex_str<T: ?Sized>(value: &T) -> HexStr<T> {
     HexStr(value)
 }
 
 /// blocks of 1 byte / 8 bits in hex, space in between (e.g., `4A 12 13 87`)
 ///
 /// For ease of use, prefer the `hex_str!(value)` macro.
-pub fn hex_str_1<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U1> {
+pub fn hex_str_1<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U1> {
     HexStr(value)
 }
 
 /// blocks of 2 bytes / 16 bits in hex, space in between (e.g., `4A12 1387`)
 ///
 /// For ease of use, prefer the `hex_str!(value, 2)` macro.
-pub fn hex_str_2<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U2> {
+pub fn hex_str_2<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U2> {
     HexStr(value)
 }
 
 /// blocks of 3 bytes / 24 bits in hex, space in between (e.g., `4A1213 871234 ABCD`)
 ///
 /// For ease of use, prefer the `hex_str!(value, 3)` macro.
-pub fn hex_str_3<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U3> {
+pub fn hex_str_3<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U3> {
     HexStr(value)
 }
 
 /// blocks of 4 bytes / 32 bits in hex, space in between (e.g., `4A121387 1234ABCD`)
 ///
 /// For ease of use, prefer the `hex_str!(value, 4)` macro.
-pub fn hex_str_4<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, typeint!(4)> {
+pub fn hex_str_4<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, typeint!(4)> {
     HexStr(value)
 }
 
 /// blocks of 5 bytes / 40 bits in hex, space in between (e.g., `4A12138712 34ABCD`)
 ///
 /// For ease of use, prefer the `hex_str!(value, 5)` macro.
-pub fn hex_str_5<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U5> {
+pub fn hex_str_5<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U5> {
     HexStr(value)
 }
 
 /// blocks of 8 bytes / 64 bits in hex, space in between
 ///
 /// For ease of use, prefer the `hex_str!(value, 8)` macro.
-pub fn hex_str_8<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U8> {
+pub fn hex_str_8<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U8> {
     HexStr(value)
 }
 
 /// blocks of 16 bytes / 128 bits in hex, space in between
 ///
 /// For ease of use, prefer the `hex_str!(value, 16)` macro.
-pub fn hex_str_16<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U16> {
+pub fn hex_str_16<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U16> {
     HexStr(value)
 }
 
 /// blocks of 20 bytes / 160 bits in hex, space in between
 ///
 /// For ease of use, prefer the `hex_str!(value, 20)` macro.
-pub fn hex_str_20<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U20> {
+pub fn hex_str_20<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U20> {
     HexStr(value)
 }
 
 /// blocks of 32 bytes / 256 bits in hex, space in between
 ///
 /// For ease of use, prefer the `hex_str!(value, 32)` macro.
-pub fn hex_str_32<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U32> {
+pub fn hex_str_32<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U32> {
     HexStr(value)
 }
 
 /// blocks of 64 bytes / 512 bits in hex, space in between
 ///
 /// For ease of use, prefer the `hex_str!(value, 64)` macro.
-pub fn hex_str_64<'a, T: ?Sized>(value: &'a T) -> HexStr<'a, T, SpaceSeparator, consts::U64> {
+pub fn hex_str_64<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U64> {
     HexStr(value)
 }
 

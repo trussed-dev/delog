@@ -1,7 +1,10 @@
 //! Typical flushers in various environments.
 //!
-//! Availability based on cargo flags, e.g. `std` gives stdout/stderr flushers,
-//! while `semihosting` gives flushers to host's stdout/stderr.
+//! An actual firmware will likely want to implement its own flusher.
+//!
+//! Availability based on cargo flags. The `flushers` feature must always be
+//! selected. Additionally setting `std` gives stdout/stderr flushers,
+//! while additionally setting `semihosting` gives flushers to host's stdout/stderr.
 
 #[cfg(any(feature = "std", test))]
 mod std;

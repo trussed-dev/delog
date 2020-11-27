@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate delog;
 
+#[cfg(not(all(feature = "flushers", feature = "std")))]
+compile_error!("This example needs the `flushers` and `std` features");
+
 use delog::flushers::StdoutFlusher;
 
 delog!(Delogger, 25, StdoutFlusher);
@@ -12,7 +15,7 @@ fn main() {
 
     let msg = "1234567890";
 
-    (0..10).for_each(|i| {
+    (0..10).for_each(|_| {
         info!("{}", msg);
         Delogger::flush();
     });

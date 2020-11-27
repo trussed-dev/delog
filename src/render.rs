@@ -3,7 +3,7 @@
 use core::{cmp, fmt};
 
 /// For some reason, there seems to be no existing method to easily render
-/// fmt;:Arguments in a pre-allocated byte array.
+/// fmt::Arguments in a pre-allocated byte array.
 ///
 /// That is what this does.
 pub fn render_arguments<'a>(buf: &'a mut [u8], args: fmt::Arguments) -> &'a [u8] {

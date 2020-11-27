@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate delog;
 
+#[cfg(not(all(feature = "flushers", feature = "std")))]
+compile_error!("This example needs the `flushers` and `std` features");
+
 use delog::flushers::StdoutFlusher;
 
 delog!(Delogger, 256, StdoutFlusher);

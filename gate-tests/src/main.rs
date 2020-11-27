@@ -11,11 +11,7 @@ fn main() {
     Delogger::init(delog::LevelFilter::Info, &FLUSHER).expect("all good");
     lib_a::f();
     lib_b::g();
-    println!("log attempts: {}", delog::trylogger().unwrap().attempts());
-    println!("log successes: {}", delog::trylogger().unwrap().attempts());
-    println!("log flushes: {}", delog::trylogger().unwrap().flushes());
+    println!("{:?}", delog::trylogger().unwrap().statistics());
     Delogger::flush();
-    println!("log attempts: {}", delog::trylogger().unwrap().attempts());
-    println!("log successes: {}", delog::trylogger().unwrap().attempts());
-    println!("log flushes: {}", delog::trylogger().unwrap().flushes());
+    println!("{:?}", delog::trylogger().unwrap().statistics());
 }

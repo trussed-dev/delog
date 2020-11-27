@@ -7,7 +7,8 @@ on:
     branches: [main]
 
 env:
-  QEMU_TARGET: thumbv8m.main-none-eabi
+  # need atomic CAS, so Cortex-M0/1 are out
+  QEMU_TARGET: thumbv7m-none-eabi
 
 jobs:
   test:
@@ -27,14 +28,18 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
+
       - name: Check that all crates build without warning
         run: RUSTFLAGS='--deny warnings' cargo check --all
-      - name: Run doc and lib tests
-        run: |
-          cargo test --lib
-          cargo test --doc
-      - name: Run examples as test (needs `std` feature)
-        run: cargo test --features std
+        shell: bash
+
+      - name: Check clippy output (lenient mode)
+        # run: RUSTFLAGS='--deny warnings' cargo clippy --all
+        run: cargo clippy --all
+        shell: bash
+
+      - name: Run non-QEMU tests
+        run: make non-qemu-tests
 
   qemu-test:
     strategy:
@@ -43,6 +48,7 @@ jobs:
           - stable
     # ubuntu-latest still points to 18.04, which only has QEMU 2
     runs-on: ubuntu-20.04
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -52,7 +58,7 @@ jobs:
           target: ${{ env.QEMU_TARGET }}
           override: true
 
-      - name: Install QEMU (need >= 4)
+      - name: Install QEMU (want >= 4)
         run: |
           sudo apt-get update -qq >/dev/null
           sudo apt-get install -qq qemu-system-arm >/dev/null
