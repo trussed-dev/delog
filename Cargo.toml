@@ -1,14 +1,21 @@
 [package]
 name = "delog"
-version = "0.0.0-unreleased"
+version = "0.1.0-alpha.1"
+description = "Deferred logging, an implementation and extension of `log`"
 authors = ["Nicolas Stalder <n@stalder.io>"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/nickray/delog"
+documentation = "https://docs.rs/delog"
+readme = "README.md"
+categories = ["algorithms", "development-tools", "embedded", "no-std"]
+keywords = ["log", "logging", "formatting"]
 edition = "2018"
 
 [dependencies]
 cortex-m-semihosting = { version = "0.3.5", optional = true }
+hex_fmt = "0.3.0"
 log = "0.4.11"
 typenum = "1.12.0"
-hex_fmt = "0.3.0"
 
 [dev-dependencies]
 insta = "1.3.0"
@@ -20,4 +27,3 @@ example = ["std"]
 semihosting = ["cortex-m-semihosting"]
 fallible = []
 immediate = []
-# statistics = []
