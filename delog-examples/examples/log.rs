@@ -1,17 +1,15 @@
 #[macro_use]
 extern crate delog;
 
-#[cfg(not(all(feature = "flushers", feature = "std")))]
-compile_error!("This example needs the `flushers` and `std` features");
-
 use delog::flushers::StdoutFlusher;
 
 delog!(Delogger, 256, StdoutFlusher);
+local_macros!();
 
-static STDOUT_FLUSHER: StdoutFlusher = StdoutFlusher {};
+static FLUSHER: StdoutFlusher = StdoutFlusher {};
 
 fn main() {
-    Delogger::init(log::LevelFilter::Info, &STDOUT_FLUSHER).ok();
+    Delogger::init_default(delog::LevelFilter::Info, &FLUSHER).ok();
 
     // do some serious work
     warn!("This is a warning");

@@ -65,21 +65,24 @@
 //!
 
 #![deny(missing_docs)]
-#![cfg_attr(not(any(feature = "std", test)), no_std)]
+#![cfg_attr(not(any(feature = "std-example-flushers", test)), no_std)]
 use core::fmt;
 
 pub use log as upstream;
-pub use log::{Level, LevelFilter};
+pub use log::{Level, LevelFilter, Record};
 // TODO: figure out how to re-export `log` as module and `log!` as macro
 // This way, at least we can re-export `log!`, but in a weird twist of fate,
 // it also gets re-exported as `upstream!` (huh?!)
-pub use log::{debug, error, info, log, log_enabled, trace, warn};
+// pub use log::{debug, error, info, log, log_enabled, trace, warn};
+pub use log::log_enabled;
 
 #[cfg(feature = "example")]
 pub mod example;
 
-#[cfg(all(feature = "flushers", any(feature="std", feature="semihosting", test)))]
+#[cfg(any(feature = "std-example-flushers", feature = "semihosting-example-flushers"))]
 pub mod flushers;
+
+pub mod renderers;
 
 pub mod hex;
 
@@ -99,6 +102,13 @@ pub mod render;
 pub trait Flusher: core::fmt::Debug + Send {
     /// Implementor must handle passed log `&str` in some hopefully useful way.
     fn flush(&self, logs: &str);
+}
+
+/// A way to format logs, user supplied.
+pub trait Renderer: Send + Sync {
+    /// Implementor must render record into `buf`, returning the slice containing the rendered
+    /// record.
+    fn render<'a>(&self, buf: &'a mut [u8], record: &log::Record) -> &'a [u8];
 }
 
 static mut LOGGER: Option<&'static dyn logger::TryLogWithStatistics> = None;

@@ -1,5 +1,6 @@
 something:
 	cargo run
+	cargo run --no-default-features --features lib-a/log-all,lib-b/log-all
 	cargo run --features lib-a/log-all,lib-b/log-all
 	cargo run --features lib-a/log-all
 	cargo run --features lib-b/log-all

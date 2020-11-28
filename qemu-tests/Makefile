@@ -1,5 +1,6 @@
 main-test:
 	cargo run --release
+	cargo run --release --features log-none
 
 test:
 	@echo "\nTesting debug build\n"

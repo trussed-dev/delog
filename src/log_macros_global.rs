@@ -7,7 +7,7 @@ mod try_global {
 
     /// Fallible version of `log!`.
     #[macro_export(local_inner_macros)]
-    macro_rules! try_log {
+    macro_rules! global_try_log {
         (target: $target:expr, $lvl:expr, $message:expr) => ({
             let lvl = $lvl;
             if lvl <= $crate::upstream::STATIC_MAX_LEVEL && lvl <= $crate::upstream::max_level() {
@@ -34,164 +34,163 @@ mod try_global {
                 Ok(())
             }
         });
-        ($lvl:expr, $($arg:tt)+) => (try_log!(target: $crate::upstream::__log_module_path!(), $lvl, $($arg)+))
+        ($lvl:expr, $($arg:tt)+) => (global_try_log!(target: $crate::upstream::__log_module_path!(), $lvl, $($arg)+))
     }
 
     /// Fallible version of `debug!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! try_debug {
+    #[macro_export]
+    macro_rules! global_try_debug {
         (target: $target:expr, $($arg:tt)+) => (
-            try_log!(target: $target, $crate::Level::Debug, $($arg)+)
+            global_try_log!(target: $target, $crate::Level::Debug, $($arg)+)
         );
         ($($arg:tt)+) => (
-            try_log!($crate::Level::Debug, $($arg)+)
+            global_try_log!($crate::Level::Debug, $($arg)+)
         )
     }
 
     /// Fallible version of `error!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! try_error {
+    #[macro_export]
+    macro_rules! global_try_error {
         (target: $target:expr, $($arg:tt)+) => (
-            try_log!(target: $target, $crate::Level::Error, $($arg)+)
+            global_try_log!(target: $target, $crate::Level::Error, $($arg)+)
         );
         ($($arg:tt)+) => (
-            try_log!($crate::Level::Error, $($arg)+)
+            global_try_log!($crate::Level::Error, $($arg)+)
         )
     }
 
     /// Fallible version of `info!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! try_info {
+    #[macro_export]
+    macro_rules! global_try_info {
         (target: $target:expr, $($arg:tt)+) => (
-            try_log!(target: $target, $crate::Level::Info, $($arg)+)
+            global_try_log!(target: $target, $crate::Level::Info, $($arg)+)
         );
         ($($arg:tt)+) => (
-            try_log!($crate::Level::Info, $($arg)+)
+            global_try_log!($crate::Level::Info, $($arg)+)
         )
     }
 
     /// Fallible version of `trace!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! try_trace {
+    #[macro_export]
+    macro_rules! global_try_trace {
         (target: $target:expr, $($arg:tt)+) => (
-            try_log!(target: $target, $crate::Level::Trace, $($arg)+)
+            global_try_log!(target: $target, $crate::Level::Trace, $($arg)+)
         );
         ($($arg:tt)+) => (
-            try_log!($crate::Level::Trace, $($arg)+)
+            global_try_log!($crate::Level::Trace, $($arg)+)
         )
     }
 
     /// Fallible version of `warn!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! try_warn {
+    #[macro_export]
+    macro_rules! global_try_warn {
         (target: $target:expr, $($arg:tt)+) => (
-            try_log!(target: $target, $crate::Level::Warn, $($arg)+)
+            global_try_log!(target: $target, $crate::Level::Warn, $($arg)+)
         );
         ($($arg:tt)+) => (
-            try_log!($crate::Level::Warn, $($arg)+)
+            global_try_log!($crate::Level::Warn, $($arg)+)
         )
     }
 }
 
-#[cfg(feature = "immediate")]
-mod now_global {
-    /// Immediate version of `log!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! log_now {
-        ($lvl:expr, $($arg:tt)+) => (
-            log!(target: "!", $lvl, $($arg)+)
-        );
-    }
+// #[cfg(feature = "immediate")]
+// mod now_global {
+//     /// Immediate version of `log!`.
+//     #[macro_export(local_inner_macros)]
+//     macro_rules! log_now {
+//         ($lvl:expr, $($arg:tt)+) => (
+//             $crate::upstream::log!(target: "!", $lvl, $($arg)+)
+//         );
+//     }
 
-    /// Immediate version of `debug!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! debug_now {
-        ($($arg:tt)+) => (
-            log!(target: "!", $crate::Level::Debug, $($arg)+)
-        );
-    }
+//     /// Immediate version of `debug!`.
+//     #[macro_export(local_inner_macros)]
+//     macro_rules! debug_now {
+//         ($($arg:tt)+) => (
+//             $crate::upstream::log!(target: "!", $crate::Level::Debug, $($arg)+)
+//         );
+//     }
 
-    /// Immediate version of `error!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! error_now {
-        ($($arg:tt)+) => (
-            log!(target: "!", $crate::Level::Error, $($arg)+)
-        );
-    }
+//     /// Immediate version of `error!`.
+//     #[macro_export(local_inner_macros)]
+//     macro_rules! error_now {
+//         ($($arg:tt)+) => (
+//             $crate::upstream::log!(target: "!", $crate::Level::Error, $($arg)+)
+//         );
+//     }
 
-    /// Immediate version of `info!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! info_now {
-        ($($arg:tt)+) => (
-            log!(target: "!", $crate::Level::Info, $($arg)+)
-        );
-    }
+//     /// Immediate version of `info!`.
+//     #[macro_export(local_inner_macros)]
+//     macro_rules! info_now {
+//         ($($arg:tt)+) => (
+//             $crate::upstream::log!(target: "!", $crate::Level::Info, $($arg)+)
+//         );
+//     }
 
-    /// Immediate version of `trace!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! trace_now {
-        ($($arg:tt)+) => (
-            log!(target: "!", $crate::Level::Trace, $($arg)+)
-        );
-    }
+//     /// Immediate version of `trace!`.
+//     #[macro_export(local_inner_macros)]
+//     macro_rules! trace_now {
+//         ($($arg:tt)+) => (
+//             $crate::upstream::log!(target: "!", $crate::Level::Trace, $($arg)+)
+//         );
+//     }
 
-    /// Immediate version of `warn!`.
-    #[macro_export(local_inner_macros)]
-    macro_rules! warn_now {
-        ($($arg:tt)+) => (
-            log!(target: "!", $crate::Level::Warn, $($arg)+)
-        );
-    }
-}
+//     /// Immediate version of `warn!`.
+//     #[macro_export(local_inner_macros)]
+//     macro_rules! warn_now {
+//         ($($arg:tt)+) => (
+//             $crate::upstream::log!(target: "!", $crate::Level::Warn, $($arg)+)
+//         );
+//     }
+// }
 
 #[cfg(all(feature = "fallible", feature = "immediate"))]
 mod try_now_global {
-
     /// Fallible immediate version of `log!`.
     #[macro_export(local_inner_macros)]
-    macro_rules! try_log_now {
+    macro_rules! global_try_log_now {
         ($lvl:expr, $($arg:tt)+) => (
-            try_log!(target: "!", $lvl, $($arg)+)
+            $crate::upstream::try_log!(target: "!", $lvl, $($arg)+)
         );
     }
 
     /// Fallible immediate version of `debug!`.
     #[macro_export(local_inner_macros)]
-    macro_rules! try_debug_now {
+    macro_rules! global_try_debug_now {
         ($($arg:tt)+) => (
-            try_log!(target: "!", $crate::Level::Debug, $($arg)+)
+            $crate::upstream::try_log!(target: "!", $crate::Level::Debug, $($arg)+)
         );
     }
 
     /// Fallible immediate version of `error!`.
     #[macro_export(local_inner_macros)]
-    macro_rules! try_error_now {
+    macro_rules! global_try_error_now {
         ($($arg:tt)+) => (
-            try_log!(target: "!", $crate::Level::Error, $($arg)+)
+            $crate::upstream::try_log!(target: "!", $crate::Level::Error, $($arg)+)
         );
     }
 
     /// Fallible immediate version of `info!`.
     #[macro_export(local_inner_macros)]
-    macro_rules! try_info_now {
+    macro_rules! global_try_info_now {
         ($($arg:tt)+) => (
-            try_log!(target: "!", $crate::Level::Info, $($arg)+)
+            $crate::upstream::try_log!(target: "!", $crate::Level::Info, $($arg)+)
         );
     }
 
     /// Fallible immediate version of `trace!`.
     #[macro_export(local_inner_macros)]
-    macro_rules! try_trace_now {
+    macro_rules! global_try_trace_now {
         ($($arg:tt)+) => (
-            try_log!(target: "!", $crate::Level::Trace, $($arg)+)
+            $crate::upstream::try_log!(target: "!", $crate::Level::Trace, $($arg)+)
         );
     }
 
     /// Fallible immediate version of `warn!`.
     #[macro_export(local_inner_macros)]
-    macro_rules! try_warn_now {
+    macro_rules! global_try_warn_now {
         ($($arg:tt)+) => (
-            try_log!(target: "!", $crate::Level::Warn, $($arg)+)
+            $crate::upstream::try_log!(target: "!", $crate::Level::Warn, $($arg)+)
         );
     }
 

@@ -22,79 +22,294 @@ macro_rules! with_dollar_sign {
 /// To see this in action, compile documentation using `cargo doc --features example`, or inspect
 /// the `gate-tests/` subdirectory.
 #[macro_export]
-macro_rules! local_delog {
+macro_rules! local_macros {
     () => {
         $crate::with_dollar_sign! {
             ($d:tt) => {
 
                 /// Local version of `log!`.
                 #[macro_export(local_inner_macros)]
-                macro_rules! local_log {
+                macro_rules! log {
                     (target: $target:expr, $lvl:expr, $message:expr) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
-                        $crate::log!(target: $target, $lvl, $message));
+                        $crate::upstream::log!(target: $target, $lvl, $message));
                     (target: $target:expr, $lvl:expr, $d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
-                        $crate::log!(target: $target, $lvl, $d($arg)+));
+                        $crate::upstream::log!(target: $target, $lvl, $d($arg)+));
                     ($lvl:expr, $d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
-                        $crate::log!($lvl, $d($arg)+));
+                        $crate::upstream::log!($lvl, $d($arg)+));
                 }
 
                 /// Local version of `debug!`.
                 #[macro_export(local_inner_macros)]
-                macro_rules! local_debug {
+                macro_rules! debug {
                     (target: $target:expr, $d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-debug"), not(feature = "log-none")))]
-                        $crate::debug!(target: $target, $d($arg)+));
+                        $crate::upstream::debug!(target: $target, $d($arg)+));
                     ($d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-debug"), not(feature = "log-none")))]
-                        $crate::debug!($d($arg)+));
+                        $crate::upstream::debug!($d($arg)+));
                 }
 
                 /// Local version of `error!`.
                 #[macro_export(local_inner_macros)]
-                macro_rules! local_error {
+                macro_rules! error {
                     (target: $target:expr, $d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-error"), not(feature = "log-none")))]
-                        $crate::error!(target: $target, $d($arg)+));
+                        $crate::upstream::error!(target: $target, $d($arg)+));
                     ($d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-error"), not(feature = "log-none")))]
-                        $crate::error!($d($arg)+));
+                        $crate::upstream::error!($d($arg)+));
                 }
 
                 /// Local version of `info!`.
                 #[macro_export(local_inner_macros)]
-                macro_rules! local_info {
+                macro_rules! info {
                     (target: $target:expr, $d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
-                        $crate::info!(target: $target, $d($arg)+));
+                        $crate::upstream::info!(target: $target, $d($arg)+));
                     ($d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
-                        $crate::info!($d($arg)+));
+                        $crate::upstream::info!($d($arg)+));
                 }
 
                 /// Local version of `trace!`.
                 #[macro_export(local_inner_macros)]
-                macro_rules! local_trace {
+                macro_rules! trace {
                     (target: $target:expr, $d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-trace"), not(feature = "log-none")))]
-                        $crate::trace!(target: $target, $d($arg)+));
+                        $crate::upstream::trace!(target: $target, $d($arg)+));
                     ($d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-trace"), not(feature = "log-none")))]
-                        $crate::trace!($d($arg)+));
+                        $crate::upstream::trace!($d($arg)+));
                 }
 
                 /// Local version of `warn!`.
                 #[macro_export(local_inner_macros)]
-                macro_rules! local_warn {
+                macro_rules! warn {
                     (target: $target:expr, $d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-warn"), not(feature = "log-none")))]
-                        $crate::warn!(target: $target, $d($arg)+));
+                        $crate::upstream::warn!(target: $target, $d($arg)+));
                     ($d($arg:tt)+) => (
                         #[cfg(all(any(feature = "log-all", feature = "log-warn"), not(feature = "log-none")))]
-                        $crate::warn!($d($arg)+));
+                        $crate::upstream::warn!($d($arg)+));
                 }
+
+                /// Immediate version of `log!`.
+                macro_rules! log_now {
+                    ($lvl:expr, $d($arg:tt)+) => (
+                        log!(target: "!", $lvl, $d($arg)+)
+                    );
+                }
+
+                /// Immediate version of `debug!`.
+                macro_rules! debug_now {
+                    ($d($arg:tt)+) => (
+                        debug!(target: "!", $d($arg)+)
+                    );
+                }
+
+                /// Immediate version of `error!`.
+                macro_rules! error_now {
+                    ($d($arg:tt)+) => (
+                        error!(target: "!", $d($arg)+)
+                    );
+                }
+
+                /// Immediate version of `info!`.
+                macro_rules! info_now {
+                    ($d($arg:tt)+) => (
+                        info!(target: "!", $d($arg)+)
+                    );
+                }
+
+                /// Immediate version of `trace!`.
+                macro_rules! trace_now {
+                    ($d($arg:tt)+) => (
+                        trace!(target: "!", $d($arg)+)
+                    );
+                }
+
+                /// Immediate version of `warn!`.
+                macro_rules! warn_now {
+                    ($d($arg:tt)+) => (
+                        warn!(target: "!", $d($arg)+)
+                    );
+                }
+
+                // /// Fallible version of `info!`.
+                // #[macro_export(local_inner_macros)]
+                // macro_rules! try_info {
+                //     (target: $target:expr, $($arg:tt)+) => (
+                //         try_log!(target: $target, $crate::Level::Info, $($arg)+)
+                //     );
+                //     ($($arg:tt)+) => (
+                //         try_log!($crate::Level::Info, $($arg)+)
+                //     )
+                // }
+
+                // /// Fallible version of `log!`.
+                // #[macro_export(local_inner_macros)]
+                // macro_rules! try_log {
+                //     (target: $target:expr, $lvl:expr, $message:expr) => (
+                //         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
+                //         $crate::global_try_log!(target: $target, $lvl, $message));
+                //     (target: $target:expr, $lvl:expr, $d($arg:tt)+) => (
+                //         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
+                //         $crate::upstream::log!(target: $target, $lvl, $d($arg)+));
+                //     ($lvl:expr, $d($arg:tt)+) => (
+                //         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
+                //         $crate::upstream::log!($lvl, $d($arg)+));
+                // }
+
+                // /// Fallible version of `info!`.
+                // #[macro_export(local_inner_macros)]
+                // macro_rules! try_info {
+
+                //     (target: $target:expr, $d($arg:tt)+) => (
+                //         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
+                //         {
+                //             $crate::global_try_info!(target: $target, $d($arg)+)
+                //         }
+                //         #[cfg(not(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none"))))]
+                //         {
+                //             Ok(())
+                //         }
+                //     );
+
+                //     ($d($arg:tt)+) => (
+                //         #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
+                //         {
+                //             $crate::global_try_info!($d($arg)+)
+                //         }
+                //         #[cfg(not(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none"))))]
+                //         {
+                //             Ok(())
+                //         }
+                //     );
+                // }
+
+                /// Fallible version of `debug!`.
+                #[cfg(all(any(feature = "log-all", feature = "log-debug"), not(feature = "log-none")))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_debug {
+
+                    (target: $target:expr, $d($arg:tt)+) => (
+                            $crate::global_try_debug!(target: $target, $d($arg)+)
+                    );
+
+                    ($d($arg:tt)+) => (
+                            $crate::global_try_debug!($d($arg)+)
+                    );
+                }
+
+                /// Fallible version of `debug!`.
+                #[cfg(not(all(any(feature = "log-all", feature = "log-debug"), not(feature = "log-none"))))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_debug {
+
+                    // (target: $target:expr, $d($arg:tt)+) => ( Ok() );
+
+                    ($d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
+                }
+
+                /// Fallible version of `error!`.
+                #[cfg(all(any(feature = "log-all", feature = "log-error"), not(feature = "log-none")))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_error {
+
+                    (target: $target:expr, $d($arg:tt)+) => (
+                            $crate::global_try_error!(target: $target, $d($arg)+)
+                    );
+
+                    ($d($arg:tt)+) => (
+                            $crate::global_try_error!($d($arg)+)
+                    );
+                }
+
+                /// Fallible version of `error!`.
+                #[cfg(not(all(any(feature = "log-all", feature = "log-error"), not(feature = "log-none"))))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_error {
+
+                    // (target: $target:expr, $d($arg:tt)+) => ( Ok() );
+
+                    ($d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
+                }
+
+                /// Fallible version of `info!`.
+                #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_info {
+
+                    (target: $target:expr, $d($arg:tt)+) => (
+                            $crate::global_try_info!(target: $target, $d($arg)+)
+                    );
+
+                    ($d($arg:tt)+) => (
+                            $crate::global_try_info!($d($arg)+)
+                    );
+                }
+
+                /// Fallible version of `info!`.
+                #[cfg(not(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none"))))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_info {
+
+                    // (target: $target:expr, $d($arg:tt)+) => ( Ok() );
+
+                    ($d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
+                }
+
+                /// Fallible version of `trace!`.
+                #[cfg(all(any(feature = "log-all", feature = "log-trace"), not(feature = "log-none")))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_trace {
+
+                    (target: $target:expr, $d($arg:tt)+) => (
+                            $crate::global_try_trace!(target: $target, $d($arg)+)
+                    );
+
+                    ($d($arg:tt)+) => (
+                            $crate::global_try_trace!($d($arg)+)
+                    );
+                }
+
+                /// Fallible version of `trace!`.
+                #[cfg(not(all(any(feature = "log-all", feature = "log-trace"), not(feature = "log-none"))))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_trace {
+
+                    // (target: $target:expr, $d($arg:tt)+) => ( Ok() );
+
+                    ($d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
+                }
+
+                /// Fallible version of `warn!`.
+                #[cfg(all(any(feature = "log-all", feature = "log-warn"), not(feature = "log-none")))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_warn {
+
+                    (target: $target:expr, $d($arg:tt)+) => (
+                            $crate::global_try_warn!(target: $target, $d($arg)+)
+                    );
+
+                    ($d($arg:tt)+) => (
+                            $crate::global_try_warn!($d($arg)+)
+                    );
+                }
+
+                /// Fallible version of `warn!`.
+                #[cfg(not(all(any(feature = "log-all", feature = "log-warn"), not(feature = "log-none"))))]
+                #[macro_export(local_inner_macros)]
+                macro_rules! try_warn {
+
+                    // (target: $target:expr, $d($arg:tt)+) => ( Ok() );
+
+                    ($d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
+                }
+
             }
         }
     }

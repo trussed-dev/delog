@@ -17,6 +17,8 @@ impl delog::Flusher for SemihostingFlusher {
     }
 }
 
+delog::local_macros!();
+
 delog!(Delogger, 256, SemihostingFlusher);
 
 static SEMIHOSTING_FLUSHER: SemihostingFlusher = SemihostingFlusher {};
@@ -37,7 +39,7 @@ fn test_runs() {
 #[entry]
 fn main() -> ! {
 
-    Delogger::init(delog::LevelFilter::Debug, &SEMIHOSTING_FLUSHER).ok();
+    Delogger::init_default(delog::LevelFilter::Debug, &SEMIHOSTING_FLUSHER).ok();
 
     test_runs();
 

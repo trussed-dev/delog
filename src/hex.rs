@@ -270,7 +270,7 @@ pub fn hex_str_64<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U64
     HexStr(value)
 }
 
-impl<T, S, U> fmt::Debug for HexStr<'_, T, S, U>
+impl<T: ?Sized, S, U> fmt::Debug for HexStr<'_, T, S, U>
 where
     T: AsRef<[u8]>,
     S: Separator,
@@ -282,7 +282,7 @@ where
     }
 }
 
-impl<T, S, U> fmt::Display for HexStr<'_, T, S, U>
+impl<T: ?Sized, S, U> fmt::Display for HexStr<'_, T, S, U>
 where
     T: AsRef<[u8]>,
     S: Separator,

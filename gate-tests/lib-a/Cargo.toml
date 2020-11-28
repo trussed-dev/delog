@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies.delog]
 path = "../.."
-features = ["std"]
 
 [features]
 log-error = []

@@ -1,13 +1,10 @@
-use delog::hex::*;
+use delog::hex_str;
 
-// these examples are also `insta` tests,
-// see <src/snapshots> for expected outputs
 fn main() {
     let buf = [1u8, 2, 3, 0xA1, 0xB7, 0xFF, 0x3];
-    println!("'{:02X}'", hex_str_1(&buf));
-    println!("'{:02X}'", hex_str_2(&buf));
-    println!("'{:02x}'", delog::hex_str!(&buf, 2));
-    println!("'{:02X}'", hex_str_4(&buf));
-    println!("'{:02X}'", hex_str_4(&buf[..]));
-    println!("'{:X}'", hex_str_4(&buf));
+    println!("'{}'", hex_str!(&buf));
+    println!("'{}'", hex_str!(&buf, 2));
+    println!("'{:02x}'", hex_str!(&buf, 2));
+    println!("'{}'", hex_str!(&buf, 4));
+    println!("'{}'", hex_str!(&buf[..], 4));
 }

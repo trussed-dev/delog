@@ -1,4 +1,4 @@
-use core::{cmp, fmt, ptr};
+use core::{cmp, ptr};
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 /// Semi-abstract characterization of the deferred loggers that the `delog!` macro produces.
@@ -28,7 +28,7 @@ pub unsafe trait Delogger: log::Log + crate::TryLog {
     /// Call the flusher.
     fn flush(&self, logs: &str);
     /// Actually render the arguments (via internal static buffer).
-    fn render(&self, args: &fmt::Arguments) -> &'static [u8];
+    fn render(&self, record: &log::Record) -> &'static [u8];
 
     /// Capacity of circular buffer.
     fn capacity(&self) -> usize { self.buffer().len() }
@@ -97,11 +97,22 @@ pub trait TryLogWithStatistics: TryLog {
 #[macro_export]
 macro_rules! delog {
     ($logger:ident, $capacity:expr, $flusher:ty) => {
+        delog!($logger, $capacity, $flusher, renderer: $crate::renderers::ArgumentsRenderer);
+
+        impl $logger {
+            pub fn init_default(level: $crate::upstream::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
+                $logger::init(level, flusher, $crate::renderers::default())
+            }
+        }
+    };
+
+    ($logger:ident, $capacity:expr, $flusher:ty, renderer: $renderer:ty) => {
 
         #[derive(Clone, Copy)]
         /// Generated deferred logging implementation.
         pub struct $logger {
             flusher: &'static $flusher,
+            renderer: &'static $renderer,
             // immediate_flusher: &'static $flusher,
         }
 
@@ -161,7 +172,7 @@ macro_rules! delog {
 
         #[allow(missing_docs)]
         impl $logger {
-            pub fn init(level: $crate::upstream::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
+            pub fn init(level: $crate::upstream::LevelFilter, flusher: &'static $flusher, renderer: &'static $renderer) -> Result<(), ()> {
                 use core::sync::atomic::{self, AtomicBool, AtomicUsize, Ordering};
                 use core::mem::MaybeUninit;
 
@@ -171,7 +182,7 @@ macro_rules! delog {
                 {
 
                     // let logger = Self { flusher, immediate_flusher: flusher };
-                    let logger = Self { flusher };
+                    let logger = Self { flusher, renderer };
                     Self::get().replace(logger);
                     $crate::trylogger().replace(Self::get().as_ref().unwrap());
                     $crate::upstream::set_logger(Self::get().as_ref().unwrap())
@@ -243,11 +254,12 @@ macro_rules! delog {
                 &CLAIMED
             }
 
-            fn render(&self, args: &core::fmt::Arguments) -> &'static [u8] {
+            fn render(&self, record: &$crate::Record) -> &'static [u8] {
                 static mut LOCAL_BUFFER: [u8; $capacity] = [0u8; $capacity];
 
                 let local_buffer = unsafe { &mut LOCAL_BUFFER };
-                $crate::render::render_arguments(local_buffer, *args)
+                use $crate::Renderer;
+                self.renderer.render(local_buffer, record)
             }
         }
     }
@@ -288,7 +300,7 @@ pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core
 
     if record.target() == "!" {
         // todo: possibly use separate immediate_flusher
-        let input = delogger.render(record.args());
+        let input = delogger.render(record);
         let input = unsafe { core::str::from_utf8_unchecked(input) };
         Delogger::flush(&delogger, input);
         delogger.log_success_count().fetch_add(1, Ordering::SeqCst);
@@ -296,7 +308,7 @@ pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core
     }
 
     let capacity = delogger.capacity();
-    let log = delogger.render(record.args());
+    let log = delogger.render(record);
     let size = log.len();
 
     let previously_claimed = loop {

@@ -1,18 +1,17 @@
-#[macro_use]
-extern crate delog;
-
-local_delog!();
+delog::local_macros!();
 
 pub fn g() {
-    info!("global info log from lib-b");
-    warn!("global info log from lib-b");
+    delog::upstream::info!("global info from B");
+    warn!("info from B");
 
-    local_log!(delog::Level::Info, "log level info from lib_b::g");
-    local_log!(target: "!", delog::Level::Info, "log level info from lib_b::g");
-    local_log!(target: "!", delog::Level::Warn, "log level warn from lib_b::g");
+    log!(delog::Level::Info, "log level info from B");
+    log!(target: "!", delog::Level::Info, "info from B");
+    log!(target: "!", delog::Level::Warn, "warn from B");
 
-    local_info!("local info from lib_b::g");
-    local_warn!("local warn from lib_b::g");
-    local_info!(target: "!", "immediate local info from lib_b::g");
-    local_warn!(target: "!", "immediate local warn from lib_b::g");
+    info!("info from B");
+    warn!("warn from B");
+    error!("error from B");
+    error!("another error from B");
+    info!(target: "!", "immediate local info from B");
+    warn!(target: "!", "immediate local warn from B");
 }

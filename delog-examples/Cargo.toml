@@ -1,24 +1,16 @@
 [package]
-name = "gate-tests"
+name = "examples"
 version = "0.1.0"
 authors = ["Nicolas Stalder <n@stalder.io>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-cfg-if = "1"
-
-[dependencies.lib-a]
-path = "lib-a"
-
-[dependencies.lib-b]
-path = "lib-b"
-
 [dependencies.delog]
 path = ".."
 features = ["std-example-flushers"]
 
 [features]
-default = ["verbose-renderer"]
-verbose-renderer = []
+default = ["log-all"]
+log-none = []
+log-all = []
