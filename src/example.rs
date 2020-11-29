@@ -1,5 +1,4 @@
-//! An example deferred logger, generated as
-//! `delog!(Delogger, 4096, StderrFlusher, DefaultRenderer)`.
+//! An example deferred logger with example flusher.
 //!
 //! It is included here for documentation purposes only.
 //!

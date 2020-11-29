@@ -11,29 +11,24 @@
 //! However, this only works for the `Debug` trait, not `Display`; needs extra dancing
 //! to pad with leading zeros, and is not very compact when debugging binary data formats.
 //!
-//! The idea of this module (and the `hex_fmt` crate, of which `HexFmt` and `HexList` are
-//! re-exported), is to generate newtypes around byte arrays/slices with implementations of
-//! the `fmt` traits. In release mode, this is all compiled out and translates to direct
-//! instructions for the formatting machinery.
+//! The idea of this module is to generate newtypes around byte arrays/slices, and implement the `fmt` traits on these.
+//! In release builds, this is all compiled out and translates to direct instructions for the formatting machinery.
 //!
-//! The `hex_fmt` types are re-exported, as they have some neat implementations for truncated
-//! output (beginning of array, end of array, beginning+end with ellipsis in the middle).
-//!
-//! Three examples (the parameter `2` to `hex_str` in the fourth example denotes "blocks of 2 bytes"):
+//! The ide to implement truncated outputs comes from the `hex_fmt` library, which we refer to
+//! for additional newtypes that can be used.
 //!
 //! ```
 //! use delog::{hex_str, hexstr};
 //!
-//! // Use the following at your crate's root instead to "pierce" namespaces
-//! // #[macro_use]
-//! // extern crate delog;
+//! let data = &[7u8, 0xA1, 255, 0xC7];
 //!
-//! let four_bytes = &[7u8, 0xA1, 255, 0xC7];
-//!
-//! assert_eq!(format!("{}", hexstr!(four_bytes)), "07A1FFC7");
-//! assert_eq!(format!("{:x}", hexstr!(four_bytes)), "07a1ffc7");
-//! assert_eq!(format!("{:x}", hex_str!(four_bytes)), "07 a1 ff c7");
-//! assert_eq!(format!("{}", hex_str!(four_bytes, 2)), "07A1 FFC7");
+//! assert_eq!(format!("{}", hexstr!(data)), "07A1FFC7");
+//! assert_eq!(format!("{:x}", hexstr!(data)), "07a1ffc7");
+//! assert_eq!(format!("{:2x}", hex_str!(data)), "07..c7");
+//! assert_eq!(format!("{:<3x}", hex_str!(data)), "07 a1 ff..");
+//! assert_eq!(format!("{:>3x}", hex_str!(data)), "..a1 ff c7");
+//! assert_eq!(format!("{}", hex_str!(data, 2)), "07A1 FFC7");
+//! assert_eq!(format!("{:<3}", hex_str!(data, sep: "|")), "07|A1|FF..");
 //! ```
 
 use core::marker::PhantomData;
@@ -61,21 +56,18 @@ pub trait Unsigned {
 macro_rules! typeint {
     ($name:ident, $n:expr) => {
         /// A type that represents the integer `N`.
-        pub struct $name {}
+        pub struct $name;
         impl $crate::hex::Unsigned for $name {
             const N: usize = $n;
         }
     }
 }
 
-typeint!(U1, 1);
-typeint!(U2, 1);
-typeint!(U3, 1);
-typeint!(U4, 1);
-typeint!(U5, 1);
-typeint!(U6, 1);
-typeint!(U7, 1);
-typeint!(U8, 1);
+/// A type that represents the integer `1`.
+pub struct U1;
+impl Unsigned for U1 {
+    const N: usize = 1;
+}
 
 // /// A type representing the number 1.
 // pub struct U1 {}
@@ -89,15 +81,16 @@ pub trait Separator {
     const SEPARATOR: &'static str;
 }
 
-/// Parameter to `HexStr` to suppress separators between hexadecimal blocks.
-pub struct NullSeparator {}
-impl Separator for NullSeparator {
-    const SEPARATOR: &'static str = "";
-}
-/// Parameter to `HexStr` to separate hexadecimal blocks with spaces.
-pub struct SpaceSeparator {}
-impl Separator for SpaceSeparator {
-    const SEPARATOR: &'static str = " ";
+#[macro_export]
+#[doc(hidden)]
+macro_rules! typesep {
+    ($name:ident, $s:expr) => {
+        /// A type that represents the integer `N`.
+        pub struct $name;
+        impl $crate::hex::Separator for $name {
+            const SEPARATOR: &'static str = $s;
+        }
+    }
 }
 
 // /// New approach.
@@ -112,28 +105,16 @@ impl Separator for SpaceSeparator {
 ///
 /// Use the method with the same name to construct this from your byte array or slice,
 /// or preferrably the `hex_str!` or `hexstr!` macro.
-pub struct HexStr<'a, T: ?Sized, S=SpaceSeparator, BytesPerBlock=U1>
+pub struct HexStr<'a, T: ?Sized, U, S>
 where
+    U: Unsigned,
     S: Separator,
-    BytesPerBlock: Unsigned,
 {
     /// The value to be formatted.
     pub value: &'a T,
+    _bytes_per_block: PhantomData<U>,
     _separator: PhantomData<S>,
-    _block_size: PhantomData<BytesPerBlock>,
 }
-
-// /// Sorry little replacement for the missing int to Unsigned type map in `typenum`.
-// #[macro_export]
-// #[doc(hidden)]
-// macro_rules! typeint {
-//     ($n:expr) => {
-//         struct Number {};
-//         impl $crate::hex::Unsigned for Number {
-//             const N: usize = $n;
-//         }
-//     }
-// }
 
 #[macro_export]
 /// Compactly format byte arrays and slices as hexadecimals.
@@ -153,12 +134,9 @@ macro_rules! hex_str {
     ($array:expr, sep: $separator:expr) => { $crate::hex_str!($array, 1, sep: $separator) };
     ($array:expr, $n:tt) => { $crate::hex_str!($array, $n, sep: " ") };
     ($array:expr, $n:tt, sep: $separator:expr) => {{
-        struct Separator {}
-        impl $crate::hex::Separator for Separator {
-            const SEPARATOR: &'static str = $separator;
-        }
+        $crate::typesep!(Separator, $separator);
         $crate::typeint!(Number, $n);
-        $crate::hex::HexStr::<_, Separator, Number>($array)
+        $crate::hex::HexStr::<_, Number, Separator>($array)
     }};
 }
 
@@ -178,37 +156,43 @@ macro_rules! hexstr {
 }
 
 #[allow(non_snake_case)]
-/// dive into types and discover your inner traitist
+/// Explicitly construct a newtype to format with.
 ///
-/// The first parameter denotes the separator, the second `Unsigned` parameter
-/// denotes the block size in bytes, e.g. `typeint!(U7, 7)` creates a type `U7`
-/// which means blocks of 7 bytes (or 56 bits).
+/// The first generic parameter specifies the block size in bytes, the second parameter
+/// the separator string.
 ///
-/// In most cases, using one of the macros will suffice and is preferrable.
+/// This function is just here for documentation of what the `hex_str!` macro
+/// does internally (using the undocumented `typeint!` and `typesep!` macros).
 ///
 /// ```
 /// use delog::hex::{HexStr, Separator, Unsigned};
-/// struct Pipe {}
-/// impl Separator for Pipe {
-///     const SEPARATOR: &'static str  = "|";
-/// }
+///
+/// // typeint!(U3, 3);
 /// struct U3 {}
 /// impl Unsigned for U3 {
 ///     const N: usize = 3;
 /// }
+///
+/// // typesep!(Pipe, "|");
+/// struct Pipe {}
+/// impl Separator for Pipe {
+///     const SEPARATOR: &'static str  = "|";
+/// }
+///
 /// let four_bytes = &[7u8, 0xA1, 255, 0xC7];
-/// let hex_str = HexStr::<_, Pipe, U3>(four_bytes);
+/// let hex_str = HexStr::<_, U3, Pipe>(four_bytes);
+///
 /// assert_eq!(format!("{}", hex_str), "07A1FF|C7");
 /// ```
-pub fn HexStr<T: ?Sized, S: Separator, B: Unsigned>(value: &T) -> HexStr<T, S, B> {
-    HexStr { value, _separator: PhantomData, _block_size: PhantomData }
+pub fn HexStr<T: ?Sized, U: Unsigned, S: Separator>(value: &T) -> HexStr<T, U, S> {
+    HexStr { value, _bytes_per_block: PhantomData, _separator: PhantomData }
 }
 
-impl<T: ?Sized, S, U> fmt::Debug for HexStr<'_, T, S, U>
+impl<T: ?Sized, S, U> fmt::Debug for HexStr<'_, T, U, S>
 where
     T: AsRef<[u8]>,
-    S: Separator,
     U: Unsigned,
+    S: Separator,
 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -216,11 +200,11 @@ where
     }
 }
 
-impl<T: ?Sized, S, U> fmt::Display for HexStr<'_, T, S, U>
+impl<T: ?Sized, U, S> fmt::Display for HexStr<'_, T, U, S>
 where
     T: AsRef<[u8]>,
-    S: Separator,
     U: Unsigned,
+    S: Separator,
 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -230,11 +214,11 @@ where
 
 macro_rules! implement {
     ($Trait:ident, $padded_formatter:expr) => {
-        impl<'a, T: ?Sized, S, U> fmt::$Trait for HexStr<'a, T, S, U>
+        impl<'a, T: ?Sized, U, S> fmt::$Trait for HexStr<'a, T, U, S>
         where
             T: AsRef<[u8]>,
-            S: Separator,
             U: Unsigned,
+            S: Separator,
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
                 use core::fmt::{self, Alignment::*};
@@ -314,9 +298,10 @@ mod test {
     fn test_custom_hex_str() {
         let buf = [1u8, 2, 3, 0xA1, 0xB7, 0xFF, 0x3];
         typeint!(U3, 3);
+        typesep!(Space, " ");
         insta::assert_debug_snapshot!(format_args!(
             "'{:X}'",
-            HexStr::<_, SpaceSeparator, U3>(&buf),
+            HexStr::<_, U3, Space>(&buf),
         ));
     }
 

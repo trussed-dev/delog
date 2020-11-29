@@ -1,4 +1,4 @@
-/// Fallible version of `log!`.
+/// Fallible (ungated) version of `log!`.
 #[macro_export]
 macro_rules! try_log {
 
@@ -194,38 +194,23 @@ macro_rules! generate_macros {
 
                 #[macro_use]
                 /// Local version of `debug!`.
-                macro_rules! debug {
-                    // (target: $target:expr, $d($arg:tt)+) => ( try_debug!(target: $target, $d($arg)+).ok() );
-                    ($d($arg:tt)+) => ( try_debug!($d($arg)+).ok() );
-                }
+                macro_rules! debug { ($d($arg:tt)+) => ( try_debug!($d($arg)+).ok() ); }
 
                 #[macro_use]
                 /// Local version of `error!`.
-                macro_rules! error {
-                    // (target: $target:expr, $d($arg:tt)+) => ( try_error!(target: $target, $d($arg)+).ok() );
-                    ($d($arg:tt)+) => ( try_error!($d($arg)+).ok() );
-                }
+                macro_rules! error { ($d($arg:tt)+) => ( try_error!($d($arg)+).ok() ); }
 
                 #[macro_use]
                 /// Local version of `info!`.
-                macro_rules! info {
-                    // (target: $target:expr, $d($arg:tt)+) => ( try_info!(target: $target, $d($arg)+).ok() );
-                    ($d($arg:tt)+) => ( try_info!($d($arg)+).ok() );
-                }
+                macro_rules! info { ($d($arg:tt)+) => ( try_info!($d($arg)+).ok() ); }
 
                 #[macro_use]
                 /// Local version of `trace!`.
-                macro_rules! trace {
-                    // (target: $target:expr, $d($arg:tt)+) => ( $try_trace!(target: $target, $d($arg)+).ok() );
-                    ($d($arg:tt)+) => ( $try_trace!($d($arg)+).ok() );
-                }
+                macro_rules! trace { ($d($arg:tt)+) => ( $try_trace!($d($arg)+).ok() ); }
 
                 #[macro_use]
                 /// Local version of `warn!`.
-                macro_rules! warn {
-                    // (target: $target:expr, $d($arg:tt)+) => ( try_warn!(target: $target, $d($arg)+).ok() );
-                    ($d($arg:tt)+) => ( try_warn!($d($arg)+).ok() );
-                }
+                macro_rules! warn { ($d($arg:tt)+) => ( try_warn!($d($arg)+).ok() ); }
 
                 #[macro_use]
                 /// Immediate version of `log!`.

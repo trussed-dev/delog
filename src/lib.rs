@@ -66,33 +66,22 @@
 
 #![deny(missing_docs)]
 #![cfg_attr(not(any(feature = "std", test)), no_std)]
+
 use core::fmt;
 
-pub use log; // as upstream;
-pub use log::{Level, LevelFilter, Record, log_enabled};
-// TODO: figure out how to re-export `log` as module and `log!` as macro
-// This way, at least we can re-export `log!`, but in a weird twist of fate,
-// it also gets re-exported as `upstream!` (huh?!)
-// pub use log::{debug, error, info, log, log_enabled, trace, warn};
+pub use log;
+pub use log::{Level, LevelFilter, Record};
 
 #[cfg(feature = "example")]
 pub mod example;
 
-// // #[cfg(any(feature = "std-example-flushers", feature = "semihosting-example-flushers"))]
-// #[cfg(feature = "std")]
-// pub mod flushers;
-
-// pub mod renderers;
-
 pub mod hex;
 
-// mod log_macros_global;
-// mod log_macros_local;
 mod macros;
 mod logger;
-
-pub use logger::{Delogger, Statistics, TryLog, TryLogWithStatistics, dequeue, enqueue, try_enqueue};
 pub mod render;
+
+pub use logger::{Delogger, Statistics, State, TryLog, TryLogWithStatistics, dequeue, enqueue, try_enqueue};
 
 /// A way to pass on logs, user supplied.
 ///
@@ -119,7 +108,9 @@ pub fn logger() -> &'static mut Option<&'static dyn logger::TryLogWithStatistics
     unsafe { &mut LOGGER }
 }
 
-// WARNING: this is not part of the crate's public API and is subject to change at any time
+// WARNING: this is not part of the crate's public API and is subject to change at any time.
+// Taken from `log` crate, mutatis mutandis.
+// The methods are here and not in `macro` to avoid making the latter public.
 #[doc(hidden)]
 pub fn __private_api_try_log(
     args: fmt::Arguments,
@@ -138,7 +129,7 @@ pub fn __private_api_try_log(
     )
 }
 
-// WARNING: this is not part of the crate's public API and is subject to change at any time
+// WARNING: this is not part of the crate's public API and is subject to change at any time.
 #[doc(hidden)]
 pub fn __private_api_try_log_lit(
     message: &str,
