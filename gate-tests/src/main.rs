@@ -1,17 +1,17 @@
 #[macro_use]
 extern crate delog;
 
-use delog::flushers::StdoutFlusher;
+use delog::example::StdoutFlusher;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "verbose-renderer")] {
-        use delog::renderers::RipgrepRenderer;
+        use delog::render::RipgrepRenderer;
         delog!(Delogger, 4096, StdoutFlusher, renderer: RipgrepRenderer);
         static RENDERER: RipgrepRenderer = RipgrepRenderer {};
     } else {
-        use delog::renderers::ArgumentsRenderer;
+        use delog::render::DefaultRenderer;
         delog!(Delogger, 4096, StdoutFlusher);
-        static RENDERER: ArgumentsRenderer = ArgumentsRenderer {};
+        static RENDERER: DefaultRenderer = DefaultRenderer {};
     }
 }
 
@@ -21,7 +21,7 @@ fn main() {
     Delogger::init(delog::LevelFilter::Info, &FLUSHER, &RENDERER).expect("all good");
     lib_a::f();
     lib_b::g();
-    println!("{:?}", delog::trylogger().unwrap().statistics());
+    println!("{:?}", delog::logger().unwrap().statistics());
     Delogger::flush();
-    println!("{:?}", delog::trylogger().unwrap().statistics());
+    println!("{:?}", delog::logger().unwrap().statistics());
 }

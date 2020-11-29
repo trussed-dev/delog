@@ -7,7 +7,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 /// This trait is markes "unsafe" to signal that users should never (need to) "write their own",
 /// but always go through the `delog!` macro.
 ///
-/// The user has access to the global logger via `delog::trylogger()`, but only as TryLog/Log
+/// The user has access to the global logger via `delog::logger()`, but only as TryLog/Log
 /// implementation, not with this direct access to implementation details.
 pub unsafe trait Delogger: log::Log + crate::TryLog {
 
@@ -97,11 +97,11 @@ pub trait TryLogWithStatistics: TryLog {
 #[macro_export]
 macro_rules! delog {
     ($logger:ident, $capacity:expr, $flusher:ty) => {
-        delog!($logger, $capacity, $flusher, renderer: $crate::renderers::ArgumentsRenderer);
+        delog!($logger, $capacity, $flusher, renderer: $crate::render::DefaultRenderer);
 
         impl $logger {
-            pub fn init_default(level: $crate::upstream::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
-                $logger::init(level, flusher, $crate::renderers::default())
+            pub fn init_default(level: $crate::log::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
+                $logger::init(level, flusher, $crate::render::default())
             }
         }
     };
@@ -120,9 +120,9 @@ macro_rules! delog {
         unsafe impl Send for $logger {}
         unsafe impl Sync for $logger {}
 
-        impl $crate::upstream::Log for $logger {
+        impl $crate::log::Log for $logger {
             /// log level is set via log::set_max_level, not here, hence always true
-            fn enabled(&self, _: &$crate::upstream::Metadata) -> bool {
+            fn enabled(&self, _: &$crate::log::Metadata) -> bool {
                 true
             }
 
@@ -130,21 +130,20 @@ macro_rules! delog {
             fn flush(&self) {
                 let mut buf = [0u8; $capacity] ;
 
-                use $crate::Delogger;
                 let logs: &str = unsafe { $crate::dequeue(*self, &mut buf) };
 
                 use $crate::Flusher;
                 self.flusher.flush(logs);
             }
 
-            fn log(&self, record: &$crate::upstream::Record) {
+            fn log(&self, record: &$crate::log::Record) {
                 // use $crate::Delogger;
                 unsafe { $crate::enqueue(*self, record) }
             }
         }
 
         impl $crate::TryLog for $logger {
-            fn try_log(&self, record: &$crate::upstream::Record) -> core::result::Result<(), ()> {
+            fn try_log(&self, record: &$crate::log::Record) -> core::result::Result<(), ()> {
                 // use $crate::Delogger;
                 unsafe { $crate::try_enqueue(*self, record) }
             }
@@ -172,9 +171,8 @@ macro_rules! delog {
 
         #[allow(missing_docs)]
         impl $logger {
-            pub fn init(level: $crate::upstream::LevelFilter, flusher: &'static $flusher, renderer: &'static $renderer) -> Result<(), ()> {
-                use core::sync::atomic::{self, AtomicBool, AtomicUsize, Ordering};
-                use core::mem::MaybeUninit;
+            pub fn init(level: $crate::log::LevelFilter, flusher: &'static $flusher, renderer: &'static $renderer) -> Result<(), ()> {
+                use core::sync::atomic::{AtomicBool, Ordering};
 
                 static INITIALIZED: AtomicBool = AtomicBool::new(false);
                 if INITIALIZED
@@ -184,9 +182,9 @@ macro_rules! delog {
                     // let logger = Self { flusher, immediate_flusher: flusher };
                     let logger = Self { flusher, renderer };
                     Self::get().replace(logger);
-                    $crate::trylogger().replace(Self::get().as_ref().unwrap());
-                    $crate::upstream::set_logger(Self::get().as_ref().unwrap())
-                        .map(|()| $crate::upstream::set_max_level(level))
+                    $crate::logger().replace(Self::get().as_ref().unwrap());
+                    $crate::log::set_logger(Self::get().as_ref().unwrap())
+                        .map(|()| $crate::log::set_max_level(level))
                         .map_err(|_| ())
                 } else {
                     Err(())
@@ -198,10 +196,10 @@ macro_rules! delog {
                 unsafe { &mut LOGGER }
             }
 
-            fn flush() {
+            pub fn flush() {
                 // gracefully degrade if we're not initialized yet
                 if let Some(logger) = Self::get() {
-                    $crate::upstream::Log::flush(logger)
+                    $crate::log::Log::flush(logger)
                 }
             }
         }

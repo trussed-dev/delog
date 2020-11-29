@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate delog;
 
-use delog::upstream::info;
+use delog::log::info;
 
-use delog::flushers::StdoutFlusher;
+use delog::example::StdoutFlusher;
 
 delog!(Delogger, 25, StdoutFlusher);
 

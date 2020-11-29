@@ -17,7 +17,7 @@ impl delog::Flusher for SemihostingFlusher {
     }
 }
 
-delog::local_macros!();
+delog::generate_macros!();
 
 delog!(Delogger, 256, SemihostingFlusher);
 
@@ -43,7 +43,7 @@ fn main() -> ! {
 
     test_runs();
 
-    debug_now!("{:?}", delog::trylogger().unwrap().statistics());
+    debug_now!("{:?}", delog::logger().unwrap().statistics());
     info_now!("All tests passed");
 
     debug::exit(debug::EXIT_SUCCESS);

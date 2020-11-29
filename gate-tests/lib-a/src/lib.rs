@@ -1,15 +1,22 @@
-delog::local_macros!();
+delog::generate_macros!();
 
 pub fn f() {
-    info!("global info log from lib_a");
-    warn!("global info log from lib_a");
+    submodule::sub_f();
+    lib_a1::f();
+}
 
-    log!(delog::Level::Info, "log level info from lib_a::f");
-    log!(target: "!", delog::Level::Info, "log level info from lib_a::f");
-    log!(target: "!", delog::Level::Warn, "log level warn from lib_a::f");
+pub mod submodule {
+    pub fn sub_f() {
+        log::info!("global info log from lib_a");
+        log::warn!("global info log from lib_a");
 
-    info!("local info from lib_a::f");
-    warn!("local warn from lib_a::f");
-    info!(target: "!", "immediate local info from lib_a::f");
-    warn!(target: "!", "immediate local warn from lib_a::f");
+        // log!(delog::Level::Info, "log level info from lib_a::f");
+        // log!(target: "!", delog::Level::Info, "log level info from lib_a::f");
+        // log!(target: "!", delog::Level::Warn, "log level warn from lib_a::f");
+
+        info!("local info from lib_a::f");
+        warn!("local warn from lib_a::f");
+        info_now!("immediate local info from lib_a::f");
+        warn_now!("immediate local warn from lib_a::f");
+    }
 }

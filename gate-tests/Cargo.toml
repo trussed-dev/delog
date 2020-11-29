@@ -12,12 +12,15 @@ cfg-if = "1"
 [dependencies.lib-a]
 path = "lib-a"
 
+[dependencies.lib-a1]
+path = "lib-a/lib-a1"
+
 [dependencies.lib-b]
 path = "lib-b"
 
 [dependencies.delog]
 path = ".."
-features = ["std-example-flushers"]
+features = ["example"]
 
 [features]
 default = ["verbose-renderer"]

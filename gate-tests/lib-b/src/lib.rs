@@ -1,12 +1,14 @@
-delog::local_macros!();
+delog::generate_macros!();
+
+use delog::log;
 
 pub fn g() {
-    delog::upstream::info!("global info from B");
+    log::info!("global info from B");
     warn!("info from B");
 
     log!(delog::Level::Info, "log level info from B");
-    log!(target: "!", delog::Level::Info, "info from B");
-    log!(target: "!", delog::Level::Warn, "warn from B");
+    log!(target: "!", delog::Level::Info, "log! ! info from B");
+    log!(target: "!", delog::Level::Warn, "log! ! warn from B");
 
     info!("info from B");
     warn!("warn from B");

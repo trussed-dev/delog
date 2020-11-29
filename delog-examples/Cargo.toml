@@ -8,9 +8,11 @@ edition = "2018"
 
 [dependencies.delog]
 path = ".."
-features = ["std-example-flushers"]
+features = ["example"]
 
 [features]
 default = ["log-all"]
 log-none = []
 log-all = []
+
+log-warn = []

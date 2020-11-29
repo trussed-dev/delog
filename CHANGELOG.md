@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.1] - 2020-11-29
+
+- Revamp of logs: only local/gated macros are generated now
+- Remove optional semihosting dependency, relegate example implementation to QEMU test
+- Relegate stdout/stderr flushers to example submodule
+- Simplification of `hex` submodule, removing typenum and implementing all block sizes
+- Addition of "truncated" hex formats like `hex_fmt`, remove it as dependency instead
+
 ## [0.1.0-alpha.1] - 2020-11-28
 
 Test the release process, meditate on the `local_*!` issue.

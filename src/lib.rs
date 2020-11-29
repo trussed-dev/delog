@@ -65,29 +65,30 @@
 //!
 
 #![deny(missing_docs)]
-#![cfg_attr(not(any(feature = "std-example-flushers", test)), no_std)]
+#![cfg_attr(not(any(feature = "std", test)), no_std)]
 use core::fmt;
 
-pub use log as upstream;
-pub use log::{Level, LevelFilter, Record};
+pub use log; // as upstream;
+pub use log::{Level, LevelFilter, Record, log_enabled};
 // TODO: figure out how to re-export `log` as module and `log!` as macro
 // This way, at least we can re-export `log!`, but in a weird twist of fate,
 // it also gets re-exported as `upstream!` (huh?!)
 // pub use log::{debug, error, info, log, log_enabled, trace, warn};
-pub use log::log_enabled;
 
 #[cfg(feature = "example")]
 pub mod example;
 
-#[cfg(any(feature = "std-example-flushers", feature = "semihosting-example-flushers"))]
-pub mod flushers;
+// // #[cfg(any(feature = "std-example-flushers", feature = "semihosting-example-flushers"))]
+// #[cfg(feature = "std")]
+// pub mod flushers;
 
-pub mod renderers;
+// pub mod renderers;
 
 pub mod hex;
 
-mod log_macros_global;
-mod log_macros_local;
+// mod log_macros_global;
+// mod log_macros_local;
+mod macros;
 mod logger;
 
 pub use logger::{Delogger, Statistics, TryLog, TryLogWithStatistics, dequeue, enqueue, try_enqueue};
@@ -114,7 +115,7 @@ pub trait Renderer: Send + Sync {
 static mut LOGGER: Option<&'static dyn logger::TryLogWithStatistics> = None;
 
 /// Returns a reference to the logger (as `TryLogWithStatistics` implementation)
-pub fn trylogger() -> &'static mut Option<&'static dyn logger::TryLogWithStatistics> {
+pub fn logger() -> &'static mut Option<&'static dyn logger::TryLogWithStatistics> {
     unsafe { &mut LOGGER }
 }
 
@@ -125,7 +126,7 @@ pub fn __private_api_try_log(
     level: log::Level,
     &(target, module_path, file, line): &(&str, &'static str, &'static str, u32),
 ) -> core::result::Result<(), ()> {
-    trylogger().ok_or(())?.try_log(
+    crate::logger().ok_or(())?.try_log(
         &log::Record::builder()
             .args(args)
             .level(level)
@@ -144,7 +145,7 @@ pub fn __private_api_try_log_lit(
     level: log::Level,
     &(target, module_path, file, line): &(&str, &'static str, &'static str, u32),
 ) -> core::result::Result<(), ()> {
-    trylogger().ok_or(())?.try_log(
+    crate::logger().ok_or(())?.try_log(
         &log::Record::builder()
             .args(format_args!("{}", message))
             .level(level)

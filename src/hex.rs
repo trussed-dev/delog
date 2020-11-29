@@ -39,14 +39,49 @@
 use core::marker::PhantomData;
 use core::fmt;
 
-/// re-export from `hex_fmt`
-///
-pub use hex_fmt::HexFmt;
-/// re-export from `hex_fmt`
-///
-pub use hex_fmt::HexList;
+///// re-export from `hex_fmt`
+/////
+//pub use hex_fmt::HexFmt;
+///// re-export from `hex_fmt`
+/////
+//pub use hex_fmt::HexList;
 
-pub use typenum::{consts, Unsigned};
+/// A type that specifies an unsigned integer.
+///
+/// We use this instead of `typenum` as the latter currently lacks
+/// a mapping from `usize` to the associated type.
+pub trait Unsigned {
+    /// The actual number.
+    const N: usize;
+}
+
+/// Sorry little replacement for the missing int to Unsigned type map in `typenum`.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! typeint {
+    ($name:ident, $n:expr) => {
+        /// A type that represents the integer `N`.
+        pub struct $name {}
+        impl $crate::hex::Unsigned for $name {
+            const N: usize = $n;
+        }
+    }
+}
+
+typeint!(U1, 1);
+typeint!(U2, 1);
+typeint!(U3, 1);
+typeint!(U4, 1);
+typeint!(U5, 1);
+typeint!(U6, 1);
+typeint!(U7, 1);
+typeint!(U8, 1);
+
+// /// A type representing the number 1.
+// pub struct U1 {}
+// impl Unsigned for U1 {
+//     const N: usize = 1;
+// }
 
 /// A type that specifies a separator str.
 pub trait Separator {
@@ -65,12 +100,19 @@ impl Separator for SpaceSeparator {
     const SEPARATOR: &'static str = " ";
 }
 
+// /// New approach.
+// pub trait HexStrTrait {
+//     const BYTES_PER_BLOCK: usize;
+//     const SEPARATOR: &'static str;
+//     fn bytes(&self) -> &[u8];
+// }
+
 /// Zero-sized wrapper newtype, allowing grouping bytes in blocks of N hexadecimals
 /// during formatting.
 ///
 /// Use the method with the same name to construct this from your byte array or slice,
 /// or preferrably the `hex_str!` or `hexstr!` macro.
-pub struct HexStr<'a, T: ?Sized, S=SpaceSeparator, BytesPerBlock=consts::U1>
+pub struct HexStr<'a, T: ?Sized, S=SpaceSeparator, BytesPerBlock=U1>
 where
     S: Separator,
     BytesPerBlock: Unsigned,
@@ -81,33 +123,20 @@ where
     _block_size: PhantomData<BytesPerBlock>,
 }
 
-/// Sorry little replacement for the missing int to Unsigned type map in `typenum`.
-// this doesn't really help with the below, as it doesn't match on passed $n:literal values
-// hoping for: https://github.com/paholg/typenum/pull/136
-#[macro_export]
-#[doc(hidden)]
-macro_rules! typeint {
-    (1) => { $crate::hex::consts::U1 };
-    (2) => { $crate::hex::consts::U2 };
-    (3) => { $crate::hex::consts::U3 };
-    (4) => { $crate::hex::consts::U4 };
-    (5) => { $crate::hex::consts::U5 };
-    (6) => { $crate::hex::consts::U6 };
-    (7) => { $crate::hex::consts::U7 };
-    (8) => { $crate::hex::consts::U8 };
-    (9) => { $crate::hex::consts::U9 };
-    (10) => { $crate::hex::consts::U10 };
-    (16) => { $crate::hex::consts::U16 };
-    (20) => { $crate::hex::consts::U20 };
-    (32) => { $crate::hex::consts::U32 };
-    (64) => { $crate::hex::consts::U64 };
-}
+// /// Sorry little replacement for the missing int to Unsigned type map in `typenum`.
+// #[macro_export]
+// #[doc(hidden)]
+// macro_rules! typeint {
+//     ($n:expr) => {
+//         struct Number {};
+//         impl $crate::hex::Unsigned for Number {
+//             const N: usize = $n;
+//         }
+//     }
+// }
 
 #[macro_export]
 /// Compactly format byte arrays and slices as hexadecimals.
-///
-/// Exposes the `hex_str` function as macro, for ease of practical use via the
-/// latter's "namespace-piercing" capabilities.
 ///
 /// The second parameter refers to the number of bytes in a block (separated by spaces).
 ///
@@ -116,43 +145,25 @@ macro_rules! typeint {
 /// let four_bytes = &[7u8, 0xA1, 255, 0xC7];
 /// assert_eq!(format!("{:x}", hex_str!(four_bytes)), "07 a1 ff c7");
 /// assert_eq!(format!("{}", hex_str!(four_bytes, 2)), "07A1 FFC7");
-/// assert_eq!(format!("{}", hex_str!(four_bytes, 2, "|")), "07A1|FFC7");
+/// assert_eq!(format!("{}", hex_str!(four_bytes, 2, sep: "|")), "07A1|FFC7");
 /// assert_eq!(format!("{}", hex_str!(four_bytes, 3)), "07A1FF C7");
 /// ```
 macro_rules! hex_str {
-    ($array:expr) => { $crate::hex::hex_str($array) };
-    ($array:expr, 1) => { $crate::hex::hex_str_1($array) };
-    // ($array:expr, 2) => { $crate::hex::hex_str_2($array) };
-    ($array:expr, 2) => { $crate::hex_str!($array, 2, " ") };
-    ($array:expr, 3) => { $crate::hex::hex_str_3($array) };
-    ($array:expr, 4) => { $crate::hex::hex_str_4($array) };
-    ($array:expr, 5) => { $crate::hex::hex_str_5($array) };
-    ($array:expr, 8) => { $crate::hex::hex_str_8($array) };
-    ($array:expr, 16) => { $crate::hex::hex_str_16($array) };
-    ($array:expr, 20) => { $crate::hex::hex_str_20($array) };
-    ($array:expr, 32) => { $crate::hex::hex_str_32($array) };
-    ($array:expr, 64) => { $crate::hex::hex_str_64($array) };
-    ($array:expr, 2, $separator:expr) => {{
+    ($array:expr) => { $crate::hex_str!($array, 1, sep: " ") };
+    ($array:expr, sep: $separator:expr) => { $crate::hex_str!($array, 1, sep: $separator) };
+    ($array:expr, $n:tt) => { $crate::hex_str!($array, $n, sep: " ") };
+    ($array:expr, $n:tt, sep: $separator:expr) => {{
         struct Separator {}
         impl $crate::hex::Separator for Separator {
             const SEPARATOR: &'static str = $separator;
         }
-        $crate::hex::HexStr::<_, Separator, $crate::typeint!(2)>($array)
+        $crate::typeint!(Number, $n);
+        $crate::hex::HexStr::<_, Separator, Number>($array)
     }};
-    // ($array:expr, $n:literal, $separator:expr) => {{
-    //     struct Separator {}
-    //     impl $crate::hex::Separator for Separator {
-    //         const SEPARATOR: &'static str = $separator;
-    //     }
-    //     $crate::hex::HexStr::<_, Separator, $crate::typeint!($n)>($array)
-    // }};
 }
 
 #[macro_export]
 /// More compactly format byte arrays and slices as hexadecimals.
-///
-/// Exposes the `hexstr` function (no spaces) as macro, for ease of practical use via the
-/// latter's "namespace-piercing" capabilities.
 ///
 /// ```
 /// use delog::hexstr;
@@ -161,113 +172,36 @@ macro_rules! hex_str {
 /// assert_eq!(format!("{:x}", hexstr!(four_bytes)), "07a1ffc7");
 /// ```
 macro_rules! hexstr {
-    ($array:expr) => { $crate::hex::hexstr($array) };
+    ($array:expr) => {
+        $crate::hex_str!($array, sep: "")
+    }
 }
 
 #[allow(non_snake_case)]
-/// dive into `typenum` and discover your inner traitist
+/// dive into types and discover your inner traitist
 ///
-/// The first parameter denotes the separator, the second `typenum` parameter
-/// denotes the block size in bytes, e.g. `consts::U7` means blocks of 7 bytes (or 56 bits).
+/// The first parameter denotes the separator, the second `Unsigned` parameter
+/// denotes the block size in bytes, e.g. `typeint!(U7, 7)` creates a type `U7`
+/// which means blocks of 7 bytes (or 56 bits).
 ///
 /// In most cases, using one of the macros will suffice and is preferrable.
 ///
 /// ```
-/// use delog::hex::{HexStr, Separator, consts};
+/// use delog::hex::{HexStr, Separator, Unsigned};
 /// struct Pipe {}
 /// impl Separator for Pipe {
 ///     const SEPARATOR: &'static str  = "|";
 /// }
+/// struct U3 {}
+/// impl Unsigned for U3 {
+///     const N: usize = 3;
+/// }
 /// let four_bytes = &[7u8, 0xA1, 255, 0xC7];
-/// let hex_str = HexStr::<_, Pipe, consts::U3>(four_bytes);
+/// let hex_str = HexStr::<_, Pipe, U3>(four_bytes);
 /// assert_eq!(format!("{}", hex_str), "07A1FF|C7");
 /// ```
 pub fn HexStr<T: ?Sized, S: Separator, B: Unsigned>(value: &T) -> HexStr<T, S, B> {
     HexStr { value, _separator: PhantomData, _block_size: PhantomData }
-}
-
-/// blocks of 1 byte / 8 bits in hex, no space in between (e.g., `4A121387`)
-///
-/// For ease of use, prefer the `hexstr!(value)` macro.
-pub fn hexstr<T: ?Sized>(value: &T) -> HexStr<T, NullSeparator, consts::U1> {
-    HexStr(value)
-}
-
-/// synonym for `hex_str_1`, like ISO 7816 if enclosed in single quotes (`'8A 4F 12 AA'`).
-///
-/// For ease of use, prefer the `hex_str!(value)` macro.
-pub fn hex_str<T: ?Sized>(value: &T) -> HexStr<T> {
-    HexStr(value)
-}
-
-/// blocks of 1 byte / 8 bits in hex, space in between (e.g., `4A 12 13 87`)
-///
-/// For ease of use, prefer the `hex_str!(value)` macro.
-pub fn hex_str_1<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U1> {
-    HexStr(value)
-}
-
-/// blocks of 2 bytes / 16 bits in hex, space in between (e.g., `4A12 1387`)
-///
-/// For ease of use, prefer the `hex_str!(value, 2)` macro.
-pub fn hex_str_2<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U2> {
-    HexStr(value)
-}
-
-/// blocks of 3 bytes / 24 bits in hex, space in between (e.g., `4A1213 871234 ABCD`)
-///
-/// For ease of use, prefer the `hex_str!(value, 3)` macro.
-pub fn hex_str_3<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U3> {
-    HexStr(value)
-}
-
-/// blocks of 4 bytes / 32 bits in hex, space in between (e.g., `4A121387 1234ABCD`)
-///
-/// For ease of use, prefer the `hex_str!(value, 4)` macro.
-pub fn hex_str_4<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, typeint!(4)> {
-    HexStr(value)
-}
-
-/// blocks of 5 bytes / 40 bits in hex, space in between (e.g., `4A12138712 34ABCD`)
-///
-/// For ease of use, prefer the `hex_str!(value, 5)` macro.
-pub fn hex_str_5<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U5> {
-    HexStr(value)
-}
-
-/// blocks of 8 bytes / 64 bits in hex, space in between
-///
-/// For ease of use, prefer the `hex_str!(value, 8)` macro.
-pub fn hex_str_8<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U8> {
-    HexStr(value)
-}
-
-/// blocks of 16 bytes / 128 bits in hex, space in between
-///
-/// For ease of use, prefer the `hex_str!(value, 16)` macro.
-pub fn hex_str_16<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U16> {
-    HexStr(value)
-}
-
-/// blocks of 20 bytes / 160 bits in hex, space in between
-///
-/// For ease of use, prefer the `hex_str!(value, 20)` macro.
-pub fn hex_str_20<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U20> {
-    HexStr(value)
-}
-
-/// blocks of 32 bytes / 256 bits in hex, space in between
-///
-/// For ease of use, prefer the `hex_str!(value, 32)` macro.
-pub fn hex_str_32<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U32> {
-    HexStr(value)
-}
-
-/// blocks of 64 bytes / 512 bits in hex, space in between
-///
-/// For ease of use, prefer the `hex_str!(value, 64)` macro.
-pub fn hex_str_64<T: ?Sized>(value: &T) -> HexStr<T, SpaceSeparator, consts::U64> {
-    HexStr(value)
 }
 
 impl<T: ?Sized, S, U> fmt::Debug for HexStr<'_, T, S, U>
@@ -303,19 +237,55 @@ macro_rules! implement {
             U: Unsigned,
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-                let mut first = true;
-                for entry in self.value.as_ref().chunks(U::USIZE) {
-                    if !first {
-                        f.write_str(S::SEPARATOR)?;
-                    } else {
-                        first = false;
+                use core::fmt::{self, Alignment::*};
+                let max_bytes = f.width().unwrap_or(usize::MAX);
+                let bytes = self.value.as_ref();
+
+                #[inline]
+                fn nontruncated_fmt(
+                    bytes: &[u8], f: &mut fmt::Formatter<'_>,
+                    chunk_size: usize, separator: &str,
+                ) -> Result<(), fmt::Error> {
+                    let mut first = true;
+                    for entry in bytes.chunks(chunk_size) {
+                        if first {
+                            first = false;
+                        } else {
+                            f.write_str(separator)?;
+                        }
+                        for byte in entry.iter() {
+                            write!(f, $padded_formatter, byte)?;
+                        }
                     }
-                    for byte in entry.iter() {
-                        write!(f, $padded_formatter, byte)?;
-                        // fmt::$Trait::fmt(byte, f)?;
-                    }
+                    Ok(())
                 }
-                Ok(())
+
+                // const ELLIPSIS: &str = "…";
+                const ELLIPSIS: &str = "..";
+
+                let chunk_size = U::N;
+                let separator = S::SEPARATOR;
+
+                if bytes.len() <= max_bytes {
+                    nontruncated_fmt(bytes, f, chunk_size, separator)
+                } else {
+                    let align = f.align().unwrap_or(Center);
+                    let (left, right) = match align {
+                        Left => (max_bytes, 0),
+                        Center => (max_bytes - max_bytes/2, max_bytes/2),
+                        Right => (0, max_bytes),
+                    };
+                    nontruncated_fmt(&bytes[..left], f, chunk_size, separator)?;
+                    // if left > 0 {
+                    //     f.write_str(separator)?;
+                    // }
+                    f.write_str(ELLIPSIS)?;
+                    // if right > 0 {
+                    //     f.write_str(separator)?;
+                    // }
+                    nontruncated_fmt(&bytes[bytes.len()-right..], f, chunk_size, separator)?;
+                    Ok(())
+                }
             }
         }
     }
@@ -331,21 +301,22 @@ mod test {
     #[test]
     fn test_hex_str() {
         let buf = [1u8, 2, 3, 0xA1, 0xB7, 0xFF, 0x3];
-        insta::assert_debug_snapshot!(format_args!("'{:02X}'", hex_str_1(&buf)));
-        insta::assert_debug_snapshot!(format_args!("'{:02X}'", hex_str_2(&buf)));
-        insta::assert_debug_snapshot!(format_args!("'{:02x}'", hex_str_2(&buf)));
-        insta::assert_debug_snapshot!(format_args!("'{:02X}'", hex_str_4(&buf)));
-        insta::assert_debug_snapshot!(format_args!("'{:02X}'", hex_str_4(&buf[..])));
-        insta::assert_debug_snapshot!(format_args!("'{:02X}'", hex_str_4(&buf)));
-        insta::assert_debug_snapshot!(format_args!("'{:X}'", hex_str_4(&buf)));
+        insta::assert_debug_snapshot!(format_args!("'{}'", hex_str!(&buf)));
+        insta::assert_debug_snapshot!(format_args!("'{}'", hex_str!(&buf, 2)));
+        insta::assert_debug_snapshot!(format_args!("'{:x}'", hex_str!(&buf, 2)));
+        insta::assert_debug_snapshot!(format_args!("'{}'", hex_str!(&buf, 4)));
+        insta::assert_debug_snapshot!(format_args!("'{}'", hex_str!(&buf[..], 4)));
+        insta::assert_debug_snapshot!(format_args!("'{}'", hex_str!(&buf, 4)));
+        insta::assert_debug_snapshot!(format_args!("'{}'", hex_str!(&buf, 4)));
     }
 
     #[test]
     fn test_custom_hex_str() {
         let buf = [1u8, 2, 3, 0xA1, 0xB7, 0xFF, 0x3];
+        typeint!(U3, 3);
         insta::assert_debug_snapshot!(format_args!(
-            "'{:02X}'",
-            HexStr::<_, SpaceSeparator, consts::U3>(&buf),
+            "'{:X}'",
+            HexStr::<_, SpaceSeparator, U3>(&buf),
         ));
     }
 

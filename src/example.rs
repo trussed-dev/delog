@@ -1,14 +1,21 @@
 //! An example deferred logger, generated as
-//! `delog!(Delogger, 4096, StdoutFlusher, ArgumentsRenderer)`.
+//! `delog!(Delogger, 4096, StderrFlusher, DefaultRenderer)`.
 //!
 //! It is included here for documentation purposes only.
 //!
 //! Do ensure that the `example` feature is not active in production!
 //!
 //! ```
-//! use delog::flushers::StdoutFlusher;
-//! delog!(Delogger, 256, StdoutFlusher);
-//! static STDOUT_FLUSHER: StdoutFlusher = StdoutFlusher {};
+//! pub struct StderrFlusher {}
+//!
+//! impl crate::Flusher for StderrFlusher {
+//!     fn flush(&self, logs: &str) {
+//!         print!("{}", logs);
+//!     }
+//! }
+//!
+//! delog!(Delogger, 256, StderrFlusher);
+//! static FLUSHER: StderrFlusher = StderrFlusher {};
 //! Delogger::init(log::LevelFilter::Info, &STDOUT_FLUSHER).ok();
 //!
 //! warn!("This is a warning");
@@ -18,10 +25,31 @@
 //! Delogger::flush();
 //! ```
 
-use crate::flushers::StdoutFlusher;
-use crate::renderers::ArgumentsRenderer;
+// use crate::flushers::StderrFlusher;
+use crate::render::DefaultRenderer;
 
-crate::delog!(Delogger, 4096, StdoutFlusher, renderer: ArgumentsRenderer);
+#[derive(Debug, Default)]
+/// Flushes logs to stderr.
+pub struct StderrFlusher {}
 
-crate::local_macros!();
+impl crate::Flusher for StderrFlusher {
+    fn flush(&self, logs: &str) {
+        print!("{}", logs);
+    }
+}
+
+#[derive(Debug, Default)]
+/// Flushes logs to stdout.
+pub struct StdoutFlusher {}
+
+impl crate::Flusher for StdoutFlusher {
+    fn flush(&self, logs: &str) {
+        print!("{}", logs);
+    }
+}
+
+crate::delog!(Delogger, 4096, StderrFlusher, renderer: DefaultRenderer);
+
+// #[macro_export]
+// crate::generate_macros!();
 

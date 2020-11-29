@@ -1,10 +1,10 @@
 #[macro_use]
 extern crate delog;
 
-use delog::flushers::StdoutFlusher;
+use delog::example::StdoutFlusher;
 
 delog!(Delogger, 256, StdoutFlusher);
-local_macros!();
+generate_macros!();
 
 static FLUSHER: StdoutFlusher = StdoutFlusher {};
 
