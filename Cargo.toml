@@ -23,4 +23,5 @@ insta = "1.3.0"
 
 [features]
 example = ["std"]
+# sole reason for this is to enable `print!` in the example's `Std{err,out}Flusher`
 std = []
