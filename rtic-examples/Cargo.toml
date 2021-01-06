@@ -1,0 +1,25 @@
+[package]
+name = "rtic-examples"
+version = "0.1.0"
+authors = ["Nicolas Stalder <n@stalder.io>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cortex-m-rtic = "0.6.0-alpha.0"
+panic-semihosting = "0.5.6"
+cortex-m-semihosting = "0.3.7"
+lm3s6965 = "0.1.3"
+cortex-m = "0.6.0"
+heapless = "0.5.6"
+
+[dependencies.delog]
+path = ".."
+
+[features]
+default = ["log-all"]
+log-none = []
+log-all = []
+
+log-warn = []
