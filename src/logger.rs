@@ -104,8 +104,14 @@ macro_rules! delog {
         delog!($logger, $capacity, $flusher, renderer: $crate::render::DefaultRenderer);
 
         impl $logger {
+            #[inline]
             pub fn init_default(level: $crate::log::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
-                $logger::init(level, flusher, $crate::render::default())
+                #[cfg(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off")))] {
+                    Ok(())
+                }
+                #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))] {
+                    $logger::init(level, flusher, $crate::render::default())
+                }
             }
         }
     };
@@ -132,12 +138,16 @@ macro_rules! delog {
 
             /// reads out logs from circular buffer, and flushes via injected flusher
             fn flush(&self) {
-                let mut buf = [0u8; $capacity] ;
+                #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))] {
+                    let mut buf = [0u8; $capacity] ;
 
-                let logs: &str = unsafe { $crate::dequeue(*self, &mut buf) };
+                    let logs: &str = unsafe { $crate::dequeue(*self, &mut buf) };
 
-                use $crate::Flusher;
-                self.flusher.flush(logs);
+                    if logs.len() > 0 {
+                        use $crate::Flusher;
+                        self.flusher.flush(logs);
+                    }
+                }
             }
 
             fn log(&self, record: &$crate::log::Record) {
@@ -177,23 +187,30 @@ macro_rules! delog {
 
         #[allow(missing_docs)]
         impl $logger {
+            #[inline]
             pub fn init(level: $crate::log::LevelFilter, flusher: &'static $flusher, renderer: &'static $renderer) -> Result<(), ()> {
-                use core::sync::atomic::{AtomicBool, Ordering};
+                #[cfg(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off")))] {
+                    Ok(())
+                }
+                #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))] {
 
-                static INITIALIZED: AtomicBool = AtomicBool::new(false);
-                if INITIALIZED
-                    .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire).is_ok()
-                {
+                    use core::sync::atomic::{AtomicBool, Ordering};
 
-                    // let logger = Self { flusher, immediate_flusher: flusher };
-                    let logger = Self { flusher, renderer };
-                    Self::get().replace(logger);
-                    $crate::logger().replace(Self::get().as_ref().unwrap());
-                    $crate::log::set_logger(Self::get().as_ref().unwrap())
-                        .map(|()| $crate::log::set_max_level(level))
-                        .map_err(|_| ())
-                } else {
-                    Err(())
+                    static INITIALIZED: AtomicBool = AtomicBool::new(false);
+                    if INITIALIZED
+                        .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire).is_ok()
+                    {
+
+                        // let logger = Self { flusher, immediate_flusher: flusher };
+                        let logger = Self { flusher, renderer };
+                        Self::get().replace(logger);
+                        $crate::logger().replace(Self::get().as_ref().unwrap());
+                        $crate::log::set_logger(Self::get().as_ref().unwrap())
+                            .map(|()| $crate::log::set_max_level(level))
+                            .map_err(|_| ())
+                    } else {
+                        Err(())
+                    }
                 }
             }
 
@@ -298,92 +315,98 @@ pub unsafe fn enqueue(delogger: impl Delogger, record: &log::Record) {
 /// wraparound. If so, the writer **atomically advances the claim counter**, and starts copying
 /// its data in this newly claimed space. At the end, it is the duty of the "first" caller
 /// to advance the `written` counter to the correct state.
-#[allow(unused_unsafe)]
+#[allow(unused_unsafe, unused_variables)]
 pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core::result::Result<(), ()> {
-    if record.level() > crate::log::max_level() {
+    #[cfg(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off")))] {
         return Ok(())
     }
+    #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))] {
 
-    // keep track of how man logs were attempted
-    delogger.attempts().fetch_add(1, Ordering::SeqCst);
-
-    if record.target() == "!" {
-        // todo: possibly use separate immediate_flusher
-        let input = delogger.render(record);
-        let input = unsafe { core::str::from_utf8_unchecked(input) };
-        Delogger::flush(&delogger, input);
-        delogger.successes().fetch_add(1, Ordering::SeqCst);
-        return Ok(());
-    }
-
-    let capacity = delogger.capacity();
-    let log = delogger.render(record);
-    let size = log.len();
-
-    let previously_claimed = loop {
-        let read = delogger.read().load(Ordering::SeqCst);
-        let claimed = delogger.claimed().load(Ordering::SeqCst);
-
-        // figure out the corner cases for "wrap-around" at usize capacity
-        if claimed + size > read + capacity {
-            // not enough space, currently
-            return Err(())
+        if record.level() > crate::log::max_level() {
+            return Ok(())
         }
 
-        // try to stake out our claim
-        let previous = delogger.claimed()
-            .compare_and_swap(claimed, claimed + size, Ordering::SeqCst);
+        // keep track of how man logs were attempted
+        delogger.attempts().fetch_add(1, Ordering::SeqCst);
 
-        // we were not interrupted, the region is now ours
-        if previous == claimed {
-            break claimed;
+        if record.target() == "!" {
+            // todo: possibly use separate immediate_flusher
+            let input = delogger.render(record);
+            let input = unsafe { core::str::from_utf8_unchecked(input) };
+            Delogger::flush(&delogger, input);
+            delogger.successes().fetch_add(1, Ordering::SeqCst);
+            return Ok(());
         }
-    };
 
-    // find out if we're the "first" and will need to update `written` at the end:
-    let written = delogger.written().load(Ordering::SeqCst);
-    let first: bool = written == previously_claimed;
+        let capacity = delogger.capacity();
+        let log = delogger.render(record);
+        let size = log.len();
 
-    // now copy our data - we can be interrupted here at anytime
-    let destination = previously_claimed % capacity;
-    let buffer = delogger.buffer();
-    if destination + size < capacity {
-        // can do a single copy
-        unsafe { ptr::copy_nonoverlapping(
-            log.as_ptr(),
-            buffer.as_mut_ptr().add(destination),
-            size,
-        ) };
-    } else {
-        // need to split
-        let split = capacity - destination;
-        unsafe {
-            ptr::copy_nonoverlapping(
+        let previously_claimed = loop {
+            let read = delogger.read().load(Ordering::SeqCst);
+            let claimed = delogger.claimed().load(Ordering::SeqCst);
+
+            // figure out the corner cases for "wrap-around" at usize capacity
+            if claimed + size > read + capacity {
+                // not enough space, currently
+                return Err(())
+            }
+
+            // try to stake out our claim
+            let previous = delogger.claimed()
+                .compare_and_swap(claimed, claimed + size, Ordering::SeqCst);
+
+            // we were not interrupted, the region is now ours
+            if previous == claimed {
+                break claimed;
+            }
+        };
+
+        // find out if we're the "first" and will need to update `written` at the end:
+        let written = delogger.written().load(Ordering::SeqCst);
+        let first: bool = written == previously_claimed;
+
+        // now copy our data - we can be interrupted here at anytime
+        let destination = previously_claimed % capacity;
+        let buffer = delogger.buffer();
+        if destination + size < capacity {
+            // can do a single copy
+            unsafe { ptr::copy_nonoverlapping(
                 log.as_ptr(),
                 buffer.as_mut_ptr().add(destination),
-                split,
-            );
-            ptr::copy_nonoverlapping(
-                log.as_ptr().add(split),
-                buffer.as_mut_ptr(),
-                size - split,
-            );
-        }
-    }
-
-    if first {
-        // update `written` to current `claimed` (which may be beyond our own claim)
-        loop {
-            let claimed = delogger.claimed().load(Ordering::SeqCst);
-            delogger.written().store(claimed, Ordering::SeqCst);
-            if claimed == delogger.claimed().load(Ordering::SeqCst) {
-                break;
+                size,
+            ) };
+        } else {
+            // need to split
+            let split = capacity - destination;
+            unsafe {
+                ptr::copy_nonoverlapping(
+                    log.as_ptr(),
+                    buffer.as_mut_ptr().add(destination),
+                    split,
+                );
+                ptr::copy_nonoverlapping(
+                    log.as_ptr().add(split),
+                    buffer.as_mut_ptr(),
+                    size - split,
+                );
             }
         }
-    }
 
-    delogger.successes().fetch_add(1, Ordering::SeqCst);
-    Ok(())
+        if first {
+            // update `written` to current `claimed` (which may be beyond our own claim)
+            loop {
+                let claimed = delogger.claimed().load(Ordering::SeqCst);
+                delogger.written().store(claimed, Ordering::SeqCst);
+                if claimed == delogger.claimed().load(Ordering::SeqCst) {
+                    break;
+                }
+            }
+        }
+
+        delogger.successes().fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
 }
 
 /// The core "read from circular buffer" method. Marked unsafe to discourage use!
