@@ -300,6 +300,9 @@ pub unsafe fn enqueue(delogger: impl Delogger, record: &log::Record) {
 /// to advance the `written` counter to the correct state.
 #[allow(unused_unsafe)]
 pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core::result::Result<(), ()> {
+    if record.level() > crate::log::max_level() {
+        return Ok(())
+    }
 
     // keep track of how man logs were attempted
     delogger.attempts().fetch_add(1, Ordering::SeqCst);
