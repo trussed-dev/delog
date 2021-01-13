@@ -91,6 +91,7 @@ pub trait TryLogWithStatistics: TryLog + State<usize> {
     // fn written(&self) -> usize;
 }
 
+
 /// Generate a deferred logger with specified capacity and flushing mechanism.
 ///
 /// Note that only the final "runner" generates, initializes and flushes such a deferred logger.
@@ -98,6 +99,7 @@ pub trait TryLogWithStatistics: TryLog + State<usize> {
 /// Libraries simply make calls to `log::log!`, or its drop-in replacement `delog::log!`,
 /// and/or its extension `delog::log_now!`, and/or its alternatives `delog::try_log!` and  `delog::try_log_now`,
 /// and/or the local logging variants `local_log!`.
+#[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))]
 #[macro_export]
 macro_rules! delog {
     ($logger:ident, $capacity:expr, $flusher:ty) => {
@@ -106,12 +108,7 @@ macro_rules! delog {
         impl $logger {
             #[inline]
             pub fn init_default(level: $crate::log::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
-                #[cfg(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off")))] {
-                    Ok(())
-                }
-                #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))] {
-                    $logger::init(level, flusher, $crate::render::default())
-                }
+                $logger::init(level, flusher, $crate::render::default())
             }
         }
     };
@@ -138,15 +135,13 @@ macro_rules! delog {
 
             /// reads out logs from circular buffer, and flushes via injected flusher
             fn flush(&self) {
-                #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))] {
-                    let mut buf = [0u8; $capacity] ;
+                let mut buf = [0u8; $capacity] ;
 
-                    let logs: &str = unsafe { $crate::dequeue(*self, &mut buf) };
+                let logs: &str = unsafe { $crate::dequeue(*self, &mut buf) };
 
-                    if logs.len() > 0 {
-                        use $crate::Flusher;
-                        self.flusher.flush(logs);
-                    }
+                if logs.len() > 0 {
+                    use $crate::Flusher;
+                    self.flusher.flush(logs);
                 }
             }
 
@@ -158,7 +153,6 @@ macro_rules! delog {
 
         impl $crate::TryLog for $logger {
             fn try_log(&self, record: &$crate::log::Record) -> core::result::Result<(), ()> {
-                // use $crate::Delogger;
                 unsafe { $crate::try_enqueue(*self, record) }
             }
         }
@@ -189,28 +183,23 @@ macro_rules! delog {
         impl $logger {
             #[inline]
             pub fn init(level: $crate::log::LevelFilter, flusher: &'static $flusher, renderer: &'static $renderer) -> Result<(), ()> {
-                #[cfg(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off")))] {
-                    Ok(())
-                }
-                #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))] {
 
-                    use core::sync::atomic::{AtomicBool, Ordering};
+                use core::sync::atomic::{AtomicBool, Ordering};
 
-                    static INITIALIZED: AtomicBool = AtomicBool::new(false);
-                    if INITIALIZED
-                        .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire).is_ok()
-                    {
+                static INITIALIZED: AtomicBool = AtomicBool::new(false);
+                if INITIALIZED
+                    .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire).is_ok()
+                {
 
-                        // let logger = Self { flusher, immediate_flusher: flusher };
-                        let logger = Self { flusher, renderer };
-                        Self::get().replace(logger);
-                        $crate::logger().replace(Self::get().as_ref().unwrap());
-                        $crate::log::set_logger(Self::get().as_ref().unwrap())
-                            .map(|()| $crate::log::set_max_level(level))
-                            .map_err(|_| ())
-                    } else {
-                        Err(())
-                    }
+                    // let logger = Self { flusher, immediate_flusher: flusher };
+                    let logger = Self { flusher, renderer };
+                    Self::get().replace(logger);
+                    $crate::logger().replace(Self::get().as_ref().unwrap());
+                    $crate::log::set_logger(Self::get().as_ref().unwrap())
+                        .map(|()| $crate::log::set_max_level(level))
+                        .map_err(|_| ())
+                } else {
+                    Err(())
                 }
             }
 
@@ -283,6 +272,131 @@ macro_rules! delog {
                 let local_buffer = unsafe { &mut LOCAL_BUFFER };
                 use $crate::Renderer;
                 self.renderer.render(local_buffer, record)
+            }
+        }
+    }
+}
+
+
+/// Generate a deferred logger that will completely optimize out.
+///
+/// Note that the cfg-gate needs to be around the entire macro, as the library
+/// calling it will not be the crate that has the `max_level_off` feature.
+#[cfg(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off")))]
+#[macro_export]
+macro_rules! delog {
+    ($logger:ident, $capacity:expr, $flusher:ty) => {
+        delog!($logger, $capacity, $flusher, renderer: $crate::render::DefaultRenderer);
+
+        impl $logger {
+            #[inline]
+            pub fn init_default(level: $crate::log::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
+                Ok(())
+            }
+        }
+    };
+
+    ($logger:ident, $capacity:expr, $flusher:ty, renderer: $renderer:ty) => {
+
+        #[derive(Clone, Copy)]
+        /// Generated deferred logging implementation.
+        pub struct $logger {}
+
+        // log::Log implementations are required to be Send + Sync
+        unsafe impl Send for $logger {}
+        unsafe impl Sync for $logger {}
+
+        impl $crate::log::Log for $logger {
+            /// log level is set via log::set_max_level, not here, hence always true
+            fn enabled(&self, _: &$crate::log::Metadata) -> bool {
+                true
+            }
+
+            /// reads out logs from circular buffer, and flushes via injected flusher
+            fn flush(&self) {}
+
+            fn log(&self, _record: &$crate::log::Record) {}
+        }
+
+        impl $crate::TryLog for $logger {
+            fn try_log(&self, record: &$crate::log::Record) -> core::result::Result<(), ()> {
+                Ok(())
+            }
+        }
+
+        impl $crate::State<usize> for $logger {
+            fn attempts(&self) -> usize { 0 }
+            fn successes(&self) -> usize { 0 }
+            fn flushes(&self) -> usize { 0 }
+            fn read(&self) -> usize { 0 }
+            fn written(&self) -> usize { 0 }
+        }
+
+        impl $crate::TryLogWithStatistics for $logger {}
+
+        #[allow(missing_docs)]
+        impl $logger {
+            #[inline]
+            pub fn init(level: $crate::log::LevelFilter, flusher: &'static $flusher, renderer: &'static $renderer) -> Result<(), ()> {
+                Ok(())
+            }
+
+            fn get() -> &'static mut Option<$logger> {
+                static mut LOGGER: Option<$logger> = None;
+                unsafe { &mut LOGGER }
+            }
+
+            pub fn flush() {}
+        }
+
+        impl $crate::State<&'static core::sync::atomic::AtomicUsize> for $logger {
+            fn attempts(&self) -> &'static core::sync::atomic::AtomicUsize {
+                use core::sync::atomic::AtomicUsize;
+                static LOG_ATTEMPT_COUNT: AtomicUsize = AtomicUsize::new(0);
+                &LOG_ATTEMPT_COUNT
+            }
+
+            fn successes(&self) -> &'static core::sync::atomic::AtomicUsize {
+                use core::sync::atomic::AtomicUsize;
+                static LOG_SUCCESS_COUNT: AtomicUsize = AtomicUsize::new(0);
+                &LOG_SUCCESS_COUNT
+            }
+
+            fn flushes(&self) -> &'static core::sync::atomic::AtomicUsize {
+                use core::sync::atomic::AtomicUsize;
+                static LOG_FLUSH_COUNT: AtomicUsize = AtomicUsize::new(0);
+                &LOG_FLUSH_COUNT
+            }
+
+            fn read(&self) -> &'static core::sync::atomic::AtomicUsize {
+                use core::sync::atomic::AtomicUsize;
+                static READ: AtomicUsize = AtomicUsize::new(0);
+                &READ
+            }
+
+            fn written(&self) -> &'static core::sync::atomic::AtomicUsize {
+                use core::sync::atomic::AtomicUsize;
+                static WRITTEN: AtomicUsize = AtomicUsize::new(0);
+                &WRITTEN
+            }
+        }
+
+        unsafe impl $crate::Delogger for $logger {
+
+            fn buffer(&self) -> &'static mut [u8] {
+                unsafe { &mut [] }
+            }
+
+            fn flush(&self, logs: &str) {}
+
+            fn claimed(&self) -> &'static core::sync::atomic::AtomicUsize {
+                use core::sync::atomic::AtomicUsize;
+                static CLAIMED: AtomicUsize = AtomicUsize::new(0);
+                &CLAIMED
+            }
+
+            fn render(&self, record: &$crate::Record) -> &'static [u8] {
+                &[]
             }
         }
     }
