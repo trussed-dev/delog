@@ -1,7 +1,38 @@
-//! # Deferred logging, for instance for `printf()`-debugging (*a.k.a* tracing)
+//! # Compile-time configurable deferred logging (for `printf()`-debugging *aka* tracing)
 //!
 //! This is an implementation of the `log::Log` trait, suitable for use
 //! in both embedded and desktop environments.
+//!
+//! It has two main goals:
+//! - logs are stored in a circular static memory buffer, so that logging is "zero-cost in the inner
+//! loop" (apart from the formatting), with deferred actual I/O later via flushing.
+//! - compile-time log level settings for applications with multiple library components;
+//! inactive log levels of libraries are completely compiled out.
+//!
+//! ## Usage and defaults
+//!
+//! > *"Global settings subtractive (default all), local settings additive (default none) but with kill-switch."*
+//!
+//! From `log`, we inherit:
+//! - static global filters, default `LevelFilter::Trace` (i.e., everything), set via `delog` or
+//! `log` feature flags (multiple settings result in the most restrictive filter)
+//! - dynamic global filter, initialized in the "init"/"init_default" constructors of the
+//! macro-generated structs implementing our `Delogger` trait. This can be changed by calls to
+//! the global `set_max_level` function in `log`.
+//!
+//! Libraries that use the logging macros from `log` are governed by the more restrictive of these two settings.
+//!
+//! On the other hand, a library that uses the `delog::generate_macros!()` macro gains macros `info!`, `warn!`, etc.,
+//! which, by default, do nothing, and are completely optimized out.
+//!
+//! If such a libray itself defines a feature `log-all` that is active, then logging calls with these macros are passed through
+//! and goverend by the global filters. Such a library can also define a feature such as
+//! `log-info`, which activates *exactly* the info-level logs; it is up to the library to define
+//! logic such as "log-info implies log-warn". There is a kill-switch: if the library defines a
+//! feature `log-none`, and some intermediate library activates one of the additive `log-*`
+//! features, setting `log-none` completely turns off logging for this library.
+//!
+//! ## Background
 //!
 //! Compared to existing approaches such as `ufmt`, `cortex-m-funnel` and `defmt`,
 //! we pursue different values and requirements, namely:
