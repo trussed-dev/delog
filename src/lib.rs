@@ -9,6 +9,9 @@
 //! - compile-time log level settings for applications with multiple library components;
 //! inactive log levels of libraries are completely compiled out.
 //!
+//! Moreover, setting the kill switch feature flag `knock-it-off`, any and all traces of logging
+//! are removed from the final binary.
+//!
 //! ## Usage and defaults
 //!
 //! > *"Global settings subtractive (default all), local settings additive (default none) but with kill-switch."*
