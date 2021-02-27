@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0]- 2021-02-27
+
+- Promote existing state (0.1.0-alpha.3) to 0.1.0
+
 ## [0.1.0-alpha.1] - 2020-11-29
 
 - Revamp of logs: only local/gated macros are generated now
