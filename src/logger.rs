@@ -468,10 +468,10 @@ pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core
 
             // try to stake out our claim
             let previous = delogger.claimed()
-                .compare_and_swap(claimed, claimed + size, Ordering::SeqCst);
+                .compare_exchange(claimed, claimed + size, Ordering::SeqCst, Ordering::SeqCst);
 
             // we were not interrupted, the region is now ours
-            if previous == claimed {
+            if previous == Ok(claimed) {
                 break claimed;
             }
         };
