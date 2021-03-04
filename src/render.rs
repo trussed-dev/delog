@@ -42,8 +42,10 @@ impl<'a> WriteTo<'a> {
     }
 
     pub fn endl(&mut self) {
-        self.buffer[self.used] = b'\n';
-        self.used += 1;
+        if self.used < self.buffer.len() {
+            self.buffer[self.used] = b'\n';
+            self.used += 1;
+        }
     }
 }
 
@@ -56,7 +58,7 @@ impl<'a> core::fmt::Write for WriteTo<'a> {
         let raw_s = s.as_bytes();
         let write_num = cmp::min(raw_s.len(), remaining_buf.len());
         remaining_buf[..write_num].copy_from_slice(&raw_s[..write_num]);
-        self.used += raw_s.len();
+        self.used += write_num;
         if write_num < raw_s.len() {
             Err(fmt::Error)
         } else {
