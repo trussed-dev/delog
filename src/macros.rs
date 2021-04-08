@@ -206,7 +206,7 @@ macro_rules! generate_macros {
 
                 #[macro_use] #[macro_export]
                 /// Local version of `trace!`.
-                macro_rules! trace { ($d($arg:tt)+) => ( $try_trace!($d($arg)+).ok() ); }
+                macro_rules! trace { ($d($arg:tt)+) => ( try_trace!($d($arg)+).ok() ); }
 
                 #[macro_use] #[macro_export]
                 /// Local version of `warn!`.
