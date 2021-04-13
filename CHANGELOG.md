@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1]- 2021-04-13
+
+- Bug fixes by @conorpp
+
 ## [0.1.0]- 2021-02-27
 
 - Promote existing state (0.1.0-alpha.3) to 0.1.0
