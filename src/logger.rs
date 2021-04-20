@@ -102,8 +102,19 @@ pub trait TryLogWithStatistics: TryLog + State<usize> {
 #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))]
 #[macro_export]
 macro_rules! delog {
+    ($logger:ident, $capacity:expr, $render_capacity:expr, $flusher:ty) => {
+        delog!($logger, $capacity, $render_capacity, $flusher, renderer: $crate::render::DefaultRenderer);
+
+        impl $logger {
+            #[inline]
+            pub fn init_default(level: $crate::log::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
+                $logger::init(level, flusher, $crate::render::default())
+            }
+        }
+    };
+
     ($logger:ident, $capacity:expr, $flusher:ty) => {
-        delog!($logger, $capacity, $flusher, renderer: $crate::render::DefaultRenderer);
+        delog!($logger, $capacity, $capacity, $flusher, renderer: $crate::render::DefaultRenderer);
 
         impl $logger {
             #[inline]
@@ -114,6 +125,10 @@ macro_rules! delog {
     };
 
     ($logger:ident, $capacity:expr, $flusher:ty, renderer: $renderer:ty) => {
+        $crate::delog!($logger, $capacity, $capacity, $flusher, renderer: $renderer);
+    };
+
+    ($logger:ident, $capacity:expr, $render_capacity:expr, $flusher:ty, renderer: $renderer:ty) => {
 
         #[derive(Clone, Copy)]
         /// Generated deferred logging implementation.
@@ -267,7 +282,7 @@ macro_rules! delog {
             }
 
             fn render(&self, record: &$crate::Record) -> &'static [u8] {
-                static mut LOCAL_BUFFER: [u8; $capacity] = [0u8; $capacity];
+                static mut LOCAL_BUFFER: [u8; $render_capacity] = [0u8; $render_capacity];
 
                 let local_buffer = unsafe { &mut LOCAL_BUFFER };
                 use $crate::Renderer;
