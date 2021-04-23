@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2]- 2021-04-23
+
+- Allow independent (e.g. smaller) render buffers @conorpp
+
 ## [0.1.1]- 2021-04-13
 
 - Bug fixes by @conorpp
