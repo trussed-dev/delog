@@ -18,10 +18,21 @@ pub fn render_arguments<'a>(buf: &'a mut [u8], args: fmt::Arguments) -> &'a [u8]
 pub fn render_record<'a>(buf: &'a mut [u8], record: &log::Record) -> &'a [u8] {
     if cfg!(feature = "prefix-level") {
         match (record.file(), record.line()) {
-            (Some(file), Some(line)) => render_arguments(buf,
-                     format_args!("{}|{}|{}:{}: {}", record.level(), record.target(), file, line, record.args())),
-            _ => render_arguments(buf,
-                     format_args!("{}|{}: {}", record.level(), record.target(), record.args())),
+            (Some(file), Some(line)) => render_arguments(
+                buf,
+                format_args!(
+                    "{}|{}|{}:{}: {}",
+                    record.level(),
+                    record.target(),
+                    file,
+                    line,
+                    record.args()
+                ),
+            ),
+            _ => render_arguments(
+                buf,
+                format_args!("{}|{}: {}", record.level(), record.target(), record.args()),
+            ),
         }
     } else {
         render_arguments(buf, *record.args())
@@ -79,7 +90,6 @@ pub fn default() -> &'static DefaultRenderer {
     &RENDERER
 }
 
-
 impl Renderer for DefaultRenderer {
     fn render<'a>(&self, buf: &'a mut [u8], record: &log::Record) -> &'a [u8] {
         render_arguments(buf, *record.args())
@@ -96,12 +106,31 @@ pub struct RipgrepRenderer {}
 impl Renderer for RipgrepRenderer {
     fn render<'a>(&self, buf: &'a mut [u8], record: &log::Record) -> &'a [u8] {
         match (record.file(), record.line()) {
-            (Some(file), Some(line)) => render_arguments(buf,
-                 format_args!("{}|{}|{}:{}: {}", record.level(), record.target(), file, line, record.args())),
-            (Some(file), None) => render_arguments(buf,
-                 format_args!("{}|{}|{}: {}", record.level(), record.target(), file, record.args())),
-            _ => render_arguments(buf,
-                 format_args!("{}|{}: {}", record.level(), record.target(), record.args())),
+            (Some(file), Some(line)) => render_arguments(
+                buf,
+                format_args!(
+                    "{}|{}|{}:{}: {}",
+                    record.level(),
+                    record.target(),
+                    file,
+                    line,
+                    record.args()
+                ),
+            ),
+            (Some(file), None) => render_arguments(
+                buf,
+                format_args!(
+                    "{}|{}|{}: {}",
+                    record.level(),
+                    record.target(),
+                    file,
+                    record.args()
+                ),
+            ),
+            _ => render_arguments(
+                buf,
+                format_args!("{}|{}: {}", record.level(), record.target(), record.args()),
+            ),
         }
     }
 }

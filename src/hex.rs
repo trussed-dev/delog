@@ -31,8 +31,8 @@
 //! assert_eq!(format!("{:<3}", hex_str!(data, sep: "|")), "07|A1|FF..");
 //! ```
 
-use core::marker::PhantomData;
 use core::fmt;
+use core::marker::PhantomData;
 
 ///// re-export from `hex_fmt`
 /////
@@ -60,7 +60,7 @@ macro_rules! typeint {
         impl $crate::hex::Unsigned for $name {
             const N: usize = $n;
         }
-    }
+    };
 }
 
 /// A type that represents the integer `1`.
@@ -90,7 +90,7 @@ macro_rules! typesep {
         impl $crate::hex::Separator for $name {
             const SEPARATOR: &'static str = $s;
         }
-    }
+    };
 }
 
 // /// New approach.
@@ -185,7 +185,11 @@ macro_rules! hexstr {
 /// assert_eq!(format!("{}", hex_str), "07A1FF|C7");
 /// ```
 pub fn HexStr<T: ?Sized, U: Unsigned, S: Separator>(value: &T) -> HexStr<T, U, S> {
-    HexStr { value, _bytes_per_block: PhantomData, _separator: PhantomData }
+    HexStr {
+        value,
+        _bytes_per_block: PhantomData,
+        _separator: PhantomData,
+    }
 }
 
 impl<T: ?Sized, S, U> fmt::Debug for HexStr<'_, T, U, S>
@@ -227,8 +231,10 @@ macro_rules! implement {
 
                 #[inline]
                 fn nontruncated_fmt(
-                    bytes: &[u8], f: &mut fmt::Formatter<'_>,
-                    chunk_size: usize, separator: &str,
+                    bytes: &[u8],
+                    f: &mut fmt::Formatter<'_>,
+                    chunk_size: usize,
+                    separator: &str,
                 ) -> Result<(), fmt::Error> {
                     let mut first = true;
                     for entry in bytes.chunks(chunk_size) {
@@ -256,7 +262,7 @@ macro_rules! implement {
                     let align = f.align().unwrap_or(Center);
                     let (left, right) = match align {
                         Left => (max_bytes, 0),
-                        Center => (max_bytes - max_bytes/2, max_bytes/2),
+                        Center => (max_bytes - max_bytes / 2, max_bytes / 2),
                         Right => (0, max_bytes),
                     };
                     nontruncated_fmt(&bytes[..left], f, chunk_size, separator)?;
@@ -267,12 +273,12 @@ macro_rules! implement {
                     // if right > 0 {
                     //     f.write_str(separator)?;
                     // }
-                    nontruncated_fmt(&bytes[bytes.len()-right..], f, chunk_size, separator)?;
+                    nontruncated_fmt(&bytes[bytes.len() - right..], f, chunk_size, separator)?;
                     Ok(())
                 }
             }
         }
-    }
+    };
 }
 
 implement!(LowerHex, "{:02x}");
@@ -299,10 +305,6 @@ mod test {
         let buf = [1u8, 2, 3, 0xA1, 0xB7, 0xFF, 0x3];
         typeint!(U3, 3);
         typesep!(Space, " ");
-        insta::assert_debug_snapshot!(format_args!(
-            "'{:X}'",
-            HexStr::<_, U3, Space>(&buf),
-        ));
+        insta::assert_debug_snapshot!(format_args!("'{:X}'", HexStr::<_, U3, Space>(&buf),));
     }
-
 }

@@ -1,5 +1,6 @@
 /// Fallible (ungated) version of `log!`.
 #[macro_export]
+#[doc(hidden)]
 macro_rules! try_log {
 
     (target: $target:expr, $lvl:expr, $message:expr) => ({
@@ -65,6 +66,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `debug!`.
                 #[cfg(all(any(feature = "log-all", feature = "log-debug"), not(feature = "log-none")))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_debug {
 
                     (target: $target:expr, $d($arg:tt)+) => (
@@ -79,6 +81,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `debug!`.
                 #[cfg(not(all(any(feature = "log-all", feature = "log-debug"), not(feature = "log-none"))))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_debug {
 
                     // (target: $target:expr, $d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
@@ -88,6 +91,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `error!`.
                 #[cfg(all(any(feature = "log-all", feature = "log-error"), not(feature = "log-none")))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_error {
 
                     (target: $target:expr, $d($arg:tt)+) => (
@@ -102,6 +106,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `error!`.
                 #[cfg(not(all(any(feature = "log-all", feature = "log-error"), not(feature = "log-none"))))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_error {
 
                     // (target: $target:expr, $d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
@@ -111,6 +116,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `info!`.
                 #[cfg(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none")))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_info {
 
                     (target: $target:expr, $d($arg:tt)+) => (
@@ -125,6 +131,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `info!`.
                 #[cfg(not(all(any(feature = "log-all", feature = "log-info"), not(feature = "log-none"))))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_info {
 
                     // (target: $target:expr, $d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
@@ -134,6 +141,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `trace!`.
                 #[cfg(all(any(feature = "log-all", feature = "log-trace"), not(feature = "log-none")))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_trace {
 
                     (target: $target:expr, $d($arg:tt)+) => (
@@ -148,6 +156,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `trace!`.
                 #[cfg(not(all(any(feature = "log-all", feature = "log-trace"), not(feature = "log-none"))))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_trace {
 
                     (target: $target:expr, $d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
@@ -157,6 +166,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `warn!`.
                 #[cfg(all(any(feature = "log-all", feature = "log-warn"), not(feature = "log-none")))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_warn {
 
                     (target: $target:expr, $d($arg:tt)+) => (
@@ -171,6 +181,7 @@ macro_rules! generate_macros {
                 /// Fallible version of `warn!`.
                 #[cfg(not(all(any(feature = "log-all", feature = "log-warn"), not(feature = "log-none"))))]
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! try_warn {
 
                     (target: $target:expr, $d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
@@ -180,6 +191,7 @@ macro_rules! generate_macros {
                 #[cfg(not(feature = "log-none"))]
                 /// Local version of `log!`.
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! log {
                     (target: $target:expr, $d($arg:tt)+) => ( $crate::try_log!(target: $target, $d($arg)+).ok() );
                     ($d($arg:tt)+) => ( $crate::try_log!($d($arg)+).ok() );
@@ -188,79 +200,97 @@ macro_rules! generate_macros {
                 #[cfg(feature = "log-none")]
                 /// Local version of `log!`.
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 macro_rules! log {
                     ($d($arg:tt)+) => ( core::result::Result::<(), ()>::Ok(()) );
                 }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Local version of `debug!`.
                 macro_rules! debug { ($d($arg:tt)+) => ( try_debug!($d($arg)+).ok() ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Local version of `error!`.
                 macro_rules! error { ($d($arg:tt)+) => ( try_error!($d($arg)+).ok() ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Local version of `info!`.
                 macro_rules! info { ($d($arg:tt)+) => ( try_info!($d($arg)+).ok() ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Local version of `trace!`.
                 macro_rules! trace { ($d($arg:tt)+) => ( try_trace!($d($arg)+).ok() ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Local version of `warn!`.
                 macro_rules! warn { ($d($arg:tt)+) => ( try_warn!($d($arg)+).ok() ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Immediate version of `log!`.
                 macro_rules! log_now {
                     ($lvl:expr, $d($arg:tt)+) => ( log!(target: "!", $lvl, $d($arg)+) );
                 }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Immediate version of `debug!`.
                 macro_rules! debug_now { ($d($arg:tt)+) => ( debug!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Immediate version of `error!`.
                 macro_rules! error_now { ($d($arg:tt)+) => ( error!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Immediate version of `info!`.
                 macro_rules! info_now { ($d($arg:tt)+) => ( info!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Immediate version of `trace!`.
                 macro_rules! trace_now { ($d($arg:tt)+) => ( trace!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Immediate version of `warn!`.
                 macro_rules! warn_now { ($d($arg:tt)+) => ( warn!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Fallible immediate version of `log!`.
                 macro_rules! try_log_now {
                     ($lvl:expr, $d($arg:tt)+) => ( try_log!(target: "!", $lvl, $d($arg)+) );
                 }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Fallible immediate version of `debug!`.
                 macro_rules! try_debug_now { ($d($arg:tt)+) => ( try_debug!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Fallible immediate version of `error!`.
                 macro_rules! try_error_now { ($d($arg:tt)+) => ( try_error!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Fallible immediate version of `info!`.
                 macro_rules! try_info_now { ($d($arg:tt)+) => ( try_info!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Fallible immediate version of `trace!`.
                 macro_rules! try_trace_now { ($d($arg:tt)+) => ( try_trace!(target: "!", $d($arg)+) ); }
 
                 #[macro_use] #[macro_export]
+                #[doc(hidden)]
                 /// Fallible immediate version of `warn!`.
                 macro_rules! try_warn_now { ($d($arg:tt)+) => ( try_warn!(target: "!", $d($arg)+) ); }
 

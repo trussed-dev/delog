@@ -1,5 +1,5 @@
-use core::{cmp, ptr};
 use core::sync::atomic::{AtomicUsize, Ordering};
+use core::{cmp, ptr};
 
 /// Semi-abstract characterization of the deferred loggers that the `delog!` macro produces.
 ///
@@ -9,8 +9,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 ///
 /// The user has access to the global logger via `delog::logger()`, but only as TryLog/Log
 /// implementation, not with this direct access to implementation details.
-pub unsafe trait Delogger: log::Log + crate::TryLog + State<&'static AtomicUsize>{
-
+pub unsafe trait Delogger: log::Log + crate::TryLog + State<&'static AtomicUsize> {
     /// the underlying buffer
     fn buffer(&self) -> &'static mut [u8];
     /// How many characters were claimed so far.
@@ -21,8 +20,9 @@ pub unsafe trait Delogger: log::Log + crate::TryLog + State<&'static AtomicUsize
     fn render(&self, record: &log::Record) -> &'static [u8];
 
     /// Capacity of circular buffer.
-    fn capacity(&self) -> usize { self.buffer().len() }
-
+    fn capacity(&self) -> usize {
+        self.buffer().len()
+    }
 }
 
 /// Trait for either state or statistics of loggers.
@@ -91,7 +91,6 @@ pub trait TryLogWithStatistics: TryLog + State<usize> {
     // fn written(&self) -> usize;
 }
 
-
 /// Generate a deferred logger with specified capacity and flushing mechanism.
 ///
 /// Note that only the final "runner" generates, initializes and flushes such a deferred logger.
@@ -99,26 +98,47 @@ pub trait TryLogWithStatistics: TryLog + State<usize> {
 /// Libraries simply make calls to `log::log!`, or its drop-in replacement `delog::log!`,
 /// and/or its extension `delog::log_now!`, and/or its alternatives `delog::try_log!` and  `delog::try_log_now`,
 /// and/or the local logging variants `local_log!`.
-#[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))]
+#[cfg(not(any(
+    feature = "max_level_off",
+    all(not(debug_assertions), feature = "release_max_level_off")
+)))]
 #[macro_export]
 macro_rules! delog {
     ($logger:ident, $capacity:expr, $render_capacity:expr, $flusher:ty) => {
-        delog!($logger, $capacity, $render_capacity, $flusher, renderer: $crate::render::DefaultRenderer);
+        delog!(
+            $logger,
+            $capacity,
+            $render_capacity,
+            $flusher,
+            renderer: $crate::render::DefaultRenderer
+        );
 
         impl $logger {
             #[inline]
-            pub fn init_default(level: $crate::log::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
+            pub fn init_default(
+                level: $crate::log::LevelFilter,
+                flusher: &'static $flusher,
+            ) -> Result<(), ()> {
                 $logger::init(level, flusher, $crate::render::default())
             }
         }
     };
 
     ($logger:ident, $capacity:expr, $flusher:ty) => {
-        delog!($logger, $capacity, $capacity, $flusher, renderer: $crate::render::DefaultRenderer);
+        delog!(
+            $logger,
+            $capacity,
+            $capacity,
+            $flusher,
+            renderer: $crate::render::DefaultRenderer
+        );
 
         impl $logger {
             #[inline]
-            pub fn init_default(level: $crate::log::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
+            pub fn init_default(
+                level: $crate::log::LevelFilter,
+                flusher: &'static $flusher,
+            ) -> Result<(), ()> {
                 $logger::init(level, flusher, $crate::render::default())
             }
         }
@@ -129,7 +149,6 @@ macro_rules! delog {
     };
 
     ($logger:ident, $capacity:expr, $render_capacity:expr, $flusher:ty, renderer: $renderer:ty) => {
-
         #[derive(Clone, Copy)]
         /// Generated deferred logging implementation.
         pub struct $logger {
@@ -150,7 +169,7 @@ macro_rules! delog {
 
             /// reads out logs from circular buffer, and flushes via injected flusher
             fn flush(&self) {
-                let mut buf = [0u8; $capacity] ;
+                let mut buf = [0u8; $capacity];
 
                 let logs: &str = unsafe { $crate::dequeue(*self, &mut buf) };
 
@@ -197,15 +216,18 @@ macro_rules! delog {
         #[allow(missing_docs)]
         impl $logger {
             #[inline]
-            pub fn init(level: $crate::log::LevelFilter, flusher: &'static $flusher, renderer: &'static $renderer) -> Result<(), ()> {
-
+            pub fn init(
+                level: $crate::log::LevelFilter,
+                flusher: &'static $flusher,
+                renderer: &'static $renderer,
+            ) -> Result<(), ()> {
                 use core::sync::atomic::{AtomicBool, Ordering};
 
                 static INITIALIZED: AtomicBool = AtomicBool::new(false);
                 if INITIALIZED
-                    .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire).is_ok()
+                    .compare_exchange_weak(false, true, Ordering::AcqRel, Ordering::Acquire)
+                    .is_ok()
                 {
-
                     // let logger = Self { flusher, immediate_flusher: flusher };
                     let logger = Self { flusher, renderer };
                     Self::get().replace(logger);
@@ -264,7 +286,6 @@ macro_rules! delog {
         }
 
         unsafe impl $crate::Delogger for $logger {
-
             fn buffer(&self) -> &'static mut [u8] {
                 static mut BUFFER: [u8; $capacity] = [0u8; $capacity];
                 unsafe { &mut BUFFER }
@@ -289,30 +310,39 @@ macro_rules! delog {
                 self.renderer.render(local_buffer, record)
             }
         }
-    }
+    };
 }
-
 
 /// Generate a deferred logger that will completely optimize out.
 ///
 /// Note that the cfg-gate needs to be around the entire macro, as the library
 /// calling it will not be the crate that has the `max_level_off` feature.
-#[cfg(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off")))]
+#[cfg(any(
+    feature = "max_level_off",
+    all(not(debug_assertions), feature = "release_max_level_off")
+))]
 #[macro_export]
 macro_rules! delog {
     ($logger:ident, $capacity:expr, $flusher:ty) => {
-        delog!($logger, $capacity, $flusher, renderer: $crate::render::DefaultRenderer);
+        delog!(
+            $logger,
+            $capacity,
+            $flusher,
+            renderer: $crate::render::DefaultRenderer
+        );
 
         impl $logger {
             #[inline]
-            pub fn init_default(level: $crate::log::LevelFilter, flusher: &'static $flusher) -> Result<(), ()> {
+            pub fn init_default(
+                level: $crate::log::LevelFilter,
+                flusher: &'static $flusher,
+            ) -> Result<(), ()> {
                 Ok(())
             }
         }
     };
 
     ($logger:ident, $capacity:expr, $flusher:ty, renderer: $renderer:ty) => {
-
         #[derive(Clone, Copy)]
         /// Generated deferred logging implementation.
         pub struct $logger {}
@@ -340,11 +370,21 @@ macro_rules! delog {
         }
 
         impl $crate::State<usize> for $logger {
-            fn attempts(&self) -> usize { 0 }
-            fn successes(&self) -> usize { 0 }
-            fn flushes(&self) -> usize { 0 }
-            fn read(&self) -> usize { 0 }
-            fn written(&self) -> usize { 0 }
+            fn attempts(&self) -> usize {
+                0
+            }
+            fn successes(&self) -> usize {
+                0
+            }
+            fn flushes(&self) -> usize {
+                0
+            }
+            fn read(&self) -> usize {
+                0
+            }
+            fn written(&self) -> usize {
+                0
+            }
         }
 
         impl $crate::TryLogWithStatistics for $logger {}
@@ -352,7 +392,11 @@ macro_rules! delog {
         #[allow(missing_docs)]
         impl $logger {
             #[inline]
-            pub fn init(level: $crate::log::LevelFilter, flusher: &'static $flusher, renderer: &'static $renderer) -> Result<(), ()> {
+            pub fn init(
+                level: $crate::log::LevelFilter,
+                flusher: &'static $flusher,
+                renderer: &'static $renderer,
+            ) -> Result<(), ()> {
                 Ok(())
             }
 
@@ -397,7 +441,6 @@ macro_rules! delog {
         }
 
         unsafe impl $crate::Delogger for $logger {
-
             fn buffer(&self) -> &'static mut [u8] {
                 unsafe { &mut [] }
             }
@@ -414,7 +457,7 @@ macro_rules! delog {
                 &[]
             }
         }
-    }
+    };
 }
 
 /// The core "write to circular buffer" method. Marked unsafe to discourage use!
@@ -445,14 +488,24 @@ pub unsafe fn enqueue(delogger: impl Delogger, record: &log::Record) {
 /// its data in this newly claimed space. At the end, it is the duty of the "first" caller
 /// to advance the `written` counter to the correct state.
 #[allow(unused_unsafe, unused_variables)]
-pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core::result::Result<(), ()> {
-    #[cfg(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off")))] {
-        return Ok(())
+pub unsafe fn try_enqueue(
+    delogger: impl Delogger,
+    record: &log::Record,
+) -> core::result::Result<(), ()> {
+    #[cfg(any(
+        feature = "max_level_off",
+        all(not(debug_assertions), feature = "release_max_level_off")
+    ))]
+    {
+        return Ok(());
     }
-    #[cfg(not(any(feature = "max_level_off", all(not(debug_assertions), feature = "release_max_level_off"))))] {
-
+    #[cfg(not(any(
+        feature = "max_level_off",
+        all(not(debug_assertions), feature = "release_max_level_off")
+    )))]
+    {
         if record.level() > crate::log::max_level() {
-            return Ok(())
+            return Ok(());
         }
 
         // keep track of how man logs were attempted
@@ -478,12 +531,16 @@ pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core
             // figure out the corner cases for "wrap-around" at usize capacity
             if claimed + size > read + capacity {
                 // not enough space, currently
-                return Err(())
+                return Err(());
             }
 
             // try to stake out our claim
-            let previous = delogger.claimed()
-                .compare_exchange(claimed, claimed + size, Ordering::SeqCst, Ordering::SeqCst);
+            let previous = delogger.claimed().compare_exchange(
+                claimed,
+                claimed + size,
+                Ordering::SeqCst,
+                Ordering::SeqCst,
+            );
 
             // we were not interrupted, the region is now ours
             if previous == Ok(claimed) {
@@ -500,20 +557,14 @@ pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core
         let buffer = delogger.buffer();
         if destination + size < capacity {
             // can do a single copy
-            unsafe { ptr::copy_nonoverlapping(
-                log.as_ptr(),
-                buffer.as_mut_ptr().add(destination),
-                size,
-            ) };
+            unsafe {
+                ptr::copy_nonoverlapping(log.as_ptr(), buffer.as_mut_ptr().add(destination), size)
+            };
         } else {
             // need to split
             let split = capacity - destination;
             unsafe {
-                ptr::copy_nonoverlapping(
-                    log.as_ptr(),
-                    buffer.as_mut_ptr().add(destination),
-                    split,
-                );
+                ptr::copy_nonoverlapping(log.as_ptr(), buffer.as_mut_ptr().add(destination), split);
                 ptr::copy_nonoverlapping(
                     log.as_ptr().add(split),
                     buffer.as_mut_ptr(),
@@ -544,8 +595,7 @@ pub unsafe fn try_enqueue(delogger: impl Delogger, record: &log::Record) -> core
 /// Unfortunately exposed for all to see, as the `delog!` macro needs access to it to
 /// implement the logger at call site. Hence marked as unsafe.
 #[allow(unused_unsafe)]
-pub unsafe fn dequeue(delogger: impl Delogger, buf: &mut [u8]) -> &str
-{
+pub unsafe fn dequeue(delogger: impl Delogger, buf: &mut [u8]) -> &str {
     delogger.flushes().fetch_add(1, Ordering::SeqCst);
     // we control the inputs, so we know this is a valid string
     unsafe { core::str::from_utf8_unchecked(drain_as_bytes(delogger, buf)) }
@@ -585,7 +635,9 @@ fn drain_as_bytes(delogger: impl Delogger, buf: &mut [u8]) -> &[u8] {
                 ptr::copy_nonoverlapping(p.add(r), buf.as_mut_ptr(), available);
             }
 
-            delogger.read().store(read.wrapping_add(available), Ordering::SeqCst);
+            delogger
+                .read()
+                .store(read.wrapping_add(available), Ordering::SeqCst);
 
             // &buf[..c]
             buf.get_unchecked(..available)

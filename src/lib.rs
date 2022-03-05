@@ -111,11 +111,13 @@ pub mod example;
 
 pub mod hex;
 
-mod macros;
 mod logger;
+mod macros;
 pub mod render;
 
-pub use logger::{Delogger, Statistics, State, TryLog, TryLogWithStatistics, dequeue, enqueue, try_enqueue};
+pub use logger::{
+    dequeue, enqueue, try_enqueue, Delogger, State, Statistics, TryLog, TryLogWithStatistics,
+};
 
 /// A way to pass on logs, user supplied.
 ///
@@ -181,4 +183,3 @@ pub fn __private_api_try_log_lit(
             .build(),
     )
 }
-

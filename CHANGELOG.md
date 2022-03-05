@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3]- 2022-03-05
+
+- Doc-hide some of the macros so our dependees don't have documentation noise
+- 2021 edition
+
 ## [0.1.2]- 2021-04-23
 
 - Allow independent (e.g. smaller) render buffers @conorpp

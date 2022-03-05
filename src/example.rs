@@ -51,4 +51,3 @@ crate::delog!(Delogger, 4096, StderrFlusher, renderer: DefaultRenderer);
 
 // #[macro_export]
 // crate::generate_macros!();
-
