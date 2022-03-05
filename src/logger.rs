@@ -193,21 +193,21 @@ macro_rules! delog {
 
         impl $crate::State<usize> for $logger {
             fn attempts(&self) -> usize {
-                $crate::Delogger::attempts(self).load(core::sync::atomic::Ordering::SeqCst)
+                <dyn $crate::Delogger>::attempts(self).load(core::sync::atomic::Ordering::SeqCst)
             }
             fn successes(&self) -> usize {
-                $crate::Delogger::successes(self).load(core::sync::atomic::Ordering::SeqCst)
+                <dyn $crate::Delogger>::successes(self).load(core::sync::atomic::Ordering::SeqCst)
             }
 
             fn flushes(&self) -> usize {
-                $crate::Delogger::flushes(self).load(core::sync::atomic::Ordering::SeqCst)
+                <dyn $crate::Delogger>::flushes(self).load(core::sync::atomic::Ordering::SeqCst)
             }
 
             fn read(&self) -> usize {
-                $crate::Delogger::read(self).load(core::sync::atomic::Ordering::SeqCst)
+                <dyn $crate::Delogger>::read(self).load(core::sync::atomic::Ordering::SeqCst)
             }
             fn written(&self) -> usize {
-                $crate::Delogger::written(self).load(core::sync::atomic::Ordering::SeqCst)
+                <dyn $crate::Delogger>::written(self).load(core::sync::atomic::Ordering::SeqCst)
             }
         }
 
