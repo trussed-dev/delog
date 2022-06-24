@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5]- 2022-06-25
+- fix incorrect MIT license copyright info
+
 ## [0.1.4]- 2022-03-05
 
 - add missing dyn trait, will yank 0.1.3

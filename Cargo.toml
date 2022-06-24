@@ -1,10 +1,10 @@
 [package]
 name = "delog"
-version = "0.1.4"
+version = "0.1.5"
 description = "Deferred logging, an implementation and extension of Rust's standard logging facade."
-authors = ["Nicolas Stalder <n@stalder.io>"]
+authors = ["Trussed Developers"]
 license = "Apache-2.0 OR MIT"
-repository = "https://github.com/nickray/delog"
+repository = "https://github.com/trussed-dev/delog"
 documentation = "https://docs.rs/delog"
 readme = "README.md"
 categories = ["algorithms", "development-tools", "embedded", "no-std"]
