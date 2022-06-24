@@ -1,7 +1,7 @@
 [package]
 name = "qemu-tests"
 version = "0.0.0"
-authors = ["Nicolas Stalder <n@stalder.io>"]
+authors = ["Trussed Developers"]
 edition = "2018"
 description = "Test salty using QEMU musca-b1"
 license = "Apache-2.0 OR MIT"
