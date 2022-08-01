@@ -1,6 +1,7 @@
 /// Fallible (ungated) version of `log!`.
 #[macro_export]
 #[doc(hidden)]
+#[cfg(not(feature = "disable"))]
 macro_rules! try_log {
 
     (target: $target:expr, $lvl:expr, $message:expr) => ({
@@ -32,6 +33,27 @@ macro_rules! try_log {
     });
 
     ($lvl:expr, $($arg:tt)+) => ($crate::try_log!(target: $crate::log::__log_module_path!(), $lvl, $($arg)+))
+}
+
+#[macro_export]
+#[doc(hidden)]
+#[cfg(feature = "disable")]
+macro_rules! try_log {
+
+    (target: $target:expr, $lvl:expr, $message:expr) => ({
+        $crate::log::log!(target: $target, $lvl, $message);
+        ::core::result::Result::<(), ()>::Ok(())
+    });
+
+    (target: $target:expr, $lvl:expr, $($arg:tt)+) => ({
+        $crate::log::log!(target: $target, $lvl, $($arg)+);
+        ::core::result::Result::<(), ()>::Ok(())
+    });
+
+    ($lvl:expr, $($arg:tt)+) => ({
+        $crate::log::log!($lvl, $($arg)+);
+        ::core::result::Result::<(), ()>::Ok(())
+    });
 }
 
 // There is a syntax issue with "repetitions in binding patterns for nested macros",

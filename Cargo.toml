@@ -25,6 +25,8 @@ insta = "1.7"
 example = ["std"]
 # sole reason for this is to enable `print!` in the example's `Std{err,out}Flusher`
 std = []
+# disable deferred logging and use log::log instead
+disable = []
 
 max_level_off   = ["log/max_level_off"]
 max_level_error = ["log/max_level_error"]
