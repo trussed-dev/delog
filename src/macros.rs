@@ -1,7 +1,7 @@
 /// Fallible (ungated) version of `log!`.
 #[macro_export]
 #[doc(hidden)]
-#[cfg(not(feature = "disable"))]
+#[cfg(not(feature = "std-log"))]
 macro_rules! try_log {
 
     (target: $target:expr, $lvl:expr, $message:expr) => ({
@@ -37,7 +37,7 @@ macro_rules! try_log {
 
 #[macro_export]
 #[doc(hidden)]
-#[cfg(feature = "disable")]
+#[cfg(feature = "std-log")]
 macro_rules! try_log {
 
     (target: $target:expr, $lvl:expr, $message:expr) => ({
