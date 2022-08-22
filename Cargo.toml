@@ -1,6 +1,6 @@
 [package]
 name = "delog"
-version = "0.1.5"
+version = "0.1.6"
 description = "Deferred logging, an implementation and extension of Rust's standard logging facade."
 authors = ["Trussed Developers"]
 license = "Apache-2.0 OR MIT"
@@ -25,8 +25,8 @@ insta = "1.7"
 example = ["std"]
 # sole reason for this is to enable `print!` in the example's `Std{err,out}Flusher`
 std = []
-# disable deferred logging and use log::log instead
-disable = []
+# replace deferred logging with log::log
+std-log = []
 
 max_level_off   = ["log/max_level_off"]
 max_level_error = ["log/max_level_error"]
