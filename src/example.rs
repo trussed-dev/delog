@@ -33,7 +33,7 @@ pub struct StderrFlusher {}
 
 impl crate::Flusher for StderrFlusher {
     fn flush(&self, logs: &str) {
-        print!("{}", logs);
+        eprint!("{}", logs);
     }
 }
 
