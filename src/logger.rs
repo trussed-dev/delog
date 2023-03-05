@@ -1,4 +1,4 @@
-use core::sync::atomic::{AtomicUsize, Ordering};
+use atomic_polyfill::{AtomicUsize, Ordering};
 use core::{cmp, ptr};
 
 /// Semi-abstract characterization of the deferred loggers that the `delog!` macro produces.
