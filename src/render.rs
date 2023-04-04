@@ -82,7 +82,7 @@ use crate::Renderer;
 
 #[derive(Clone, Copy)]
 /// Renders just the `record.args()`.
-pub struct DefaultRenderer {}
+pub struct DefaultRenderer;
 
 /// The default, minimal renderer.
 pub fn default() -> &'static DefaultRenderer {
@@ -101,7 +101,7 @@ unsafe impl Sync for DefaultRenderer {}
 
 #[derive(Clone, Copy)]
 /// Renders the `record.args()`, prefixed by level, target, and file, line if they are some.
-pub struct RipgrepRenderer {}
+pub struct RipgrepRenderer;
 
 impl Renderer for RipgrepRenderer {
     fn render<'a>(&self, buf: &'a mut [u8], record: &log::Record) -> &'a [u8] {
