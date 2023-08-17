@@ -1,6 +1,6 @@
 [package]
 name = "delog"
-version = "0.1.6"
+version = "0.1.7"
 description = "Deferred logging, an implementation and extension of Rust's standard logging facade."
 authors = ["Trussed Developers"]
 license = "Apache-2.0 OR MIT"
