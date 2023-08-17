@@ -7,16 +7,16 @@ macro_rules! try_log {
         let lvl = $lvl;
         if lvl <= $crate::log::STATIC_MAX_LEVEL && lvl <= $crate::log::max_level() {
             $crate::__private_api_try_log(
-                $crate::log::__log_format_args!($($arg)+),
+                ::core::format_args!($($arg)+),
                 lvl,
-                &($target, $crate::log::__log_module_path!(), $crate::log::__log_file!(), $crate::log::__log_line!()),
+                &($target, ::core::module_path!(), ::core::file!(), ::core::line!()),
             )
         } else {
             Ok(())
         }
     });
 
-    ($lvl:expr, $($arg:tt)+) => ($crate::try_log!(target: $crate::log::__log_module_path!(), $lvl, $($arg)+))
+    ($lvl:expr, $($arg:tt)+) => ($crate::try_log!(target: ::core::module_path!(), $lvl, $($arg)+))
 }
 
 #[macro_export]
