@@ -29,7 +29,7 @@ use crate::render::DefaultRenderer;
 
 #[derive(Debug, Default)]
 /// Flushes logs to stderr.
-pub struct StderrFlusher {}
+pub struct StderrFlusher;
 
 impl crate::Flusher for StderrFlusher {
     fn flush(&self, logs: &str) {
@@ -39,7 +39,7 @@ impl crate::Flusher for StderrFlusher {
 
 #[derive(Debug, Default)]
 /// Flushes logs to stdout.
-pub struct StdoutFlusher {}
+pub struct StdoutFlusher;
 
 impl crate::Flusher for StdoutFlusher {
     fn flush(&self, logs: &str) {
