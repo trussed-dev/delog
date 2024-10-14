@@ -113,11 +113,13 @@ pub mod hex;
 
 mod logger;
 mod macros;
+mod panic;
 pub mod render;
 
 pub use logger::{
     dequeue, enqueue, try_enqueue, Delogger, State, Statistics, TryLog, TryLogWithStatistics,
 };
+pub use panic::DelogPanic;
 
 /// A way to pass on logs, user supplied.
 ///
