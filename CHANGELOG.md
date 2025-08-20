@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2023-08-17
+- fix breakage caused by using internal `log` APIs
+
 ## [0.1.6] - 2022-08-22
 - `std-log` feature to use normal logging for testing etc. @robin-nitrokey
 

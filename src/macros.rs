@@ -3,47 +3,26 @@
 #[doc(hidden)]
 #[cfg(not(feature = "std-log"))]
 macro_rules! try_log {
-
-    (target: $target:expr, $lvl:expr, $message:expr) => ({
-        let lvl = $lvl;
-        if lvl <= $crate::log::STATIC_MAX_LEVEL && lvl <= $crate::log::max_level() {
-            // ensure that $message is a valid format string literal
-            let _ = $crate::log::__log_format_args!($message);
-            $crate::__private_api_try_log_lit(
-                $message,
-                lvl,
-                &($target, $crate::log::__log_module_path!(), $crate::log::__log_file!(), $crate::log::__log_line!()),
-            )
-        } else {
-            Ok(())
-        }
-    });
-
     (target: $target:expr, $lvl:expr, $($arg:tt)+) => ({
         let lvl = $lvl;
         if lvl <= $crate::log::STATIC_MAX_LEVEL && lvl <= $crate::log::max_level() {
             $crate::__private_api_try_log(
-                $crate::log::__log_format_args!($($arg)+),
+                ::core::format_args!($($arg)+),
                 lvl,
-                &($target, $crate::log::__log_module_path!(), $crate::log::__log_file!(), $crate::log::__log_line!()),
+                &($target, ::core::module_path!(), ::core::file!(), ::core::line!()),
             )
         } else {
             Ok(())
         }
     });
 
-    ($lvl:expr, $($arg:tt)+) => ($crate::try_log!(target: $crate::log::__log_module_path!(), $lvl, $($arg)+))
+    ($lvl:expr, $($arg:tt)+) => ($crate::try_log!(target: ::core::module_path!(), $lvl, $($arg)+))
 }
 
 #[macro_export]
 #[doc(hidden)]
 #[cfg(feature = "std-log")]
 macro_rules! try_log {
-
-    (target: $target:expr, $lvl:expr, $message:expr) => ({
-        $crate::log::log!(target: $target, $lvl, $message);
-        ::core::result::Result::<(), ()>::Ok(())
-    });
 
     (target: $target:expr, $lvl:expr, $($arg:tt)+) => ({
         $crate::log::log!(target: $target, $lvl, $($arg)+);
