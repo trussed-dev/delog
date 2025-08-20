@@ -184,7 +184,7 @@ macro_rules! hexstr {
 ///
 /// assert_eq!(format!("{}", hex_str), "07A1FF|C7");
 /// ```
-pub fn HexStr<T: ?Sized, U: Unsigned, S: Separator>(value: &T) -> HexStr<T, U, S> {
+pub fn HexStr<T: ?Sized, U: Unsigned, S: Separator>(value: &T) -> HexStr<'_, T, U, S> {
     HexStr {
         value,
         _bytes_per_block: PhantomData,

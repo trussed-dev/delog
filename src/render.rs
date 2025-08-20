@@ -16,27 +16,7 @@ pub fn render_arguments<'a>(buf: &'a mut [u8], args: fmt::Arguments) -> &'a [u8]
 
 /// Render record, based on feature flags.
 pub fn render_record<'a>(buf: &'a mut [u8], record: &log::Record) -> &'a [u8] {
-    if cfg!(feature = "prefix-level") {
-        match (record.file(), record.line()) {
-            (Some(file), Some(line)) => render_arguments(
-                buf,
-                format_args!(
-                    "{}|{}|{}:{}: {}",
-                    record.level(),
-                    record.target(),
-                    file,
-                    line,
-                    record.args()
-                ),
-            ),
-            _ => render_arguments(
-                buf,
-                format_args!("{}|{}: {}", record.level(), record.target(), record.args()),
-            ),
-        }
-    } else {
-        render_arguments(buf, *record.args())
-    }
+    render_arguments(buf, *record.args())
 }
 
 // I don't get it, why isn't this implemented already?
