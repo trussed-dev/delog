@@ -1,5 +1,10 @@
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::Ordering;
 use core::{cmp, ptr};
+
+#[cfg(not(feature = "portable-atomic"))]
+use core::sync::atomic::AtomicUsize;
+#[cfg(feature = "portable-atomic")]
+use portable_atomic::AtomicUsize;
 
 /// Semi-abstract characterization of the deferred loggers that the `delog!` macro produces.
 ///

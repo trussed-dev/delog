@@ -50,7 +50,7 @@ jobs:
       - name: Install rust
         run: rustup target add ${CARGO_BUILD_TARGET}
       - name: Build
-        run: cargo build
+        run: cargo build --features portable-atomic,portable-atomic/critical-section
 
   qemu-test:
     strategy:

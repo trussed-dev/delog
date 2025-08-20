@@ -17,6 +17,7 @@ targets = []
 
 [dependencies]
 log = "0.4"
+portable-atomic = { version = "1", optional = true }
 
 [dev-dependencies]
 insta = "1.7"
